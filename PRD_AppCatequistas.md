@@ -75,9 +75,26 @@
 
 ### PWA
 - Manifesto (`/manifest.json`)
-- Service Worker com cache
+- Service Worker com cache de assets estáticos apenas (sem cache de páginas HTML)
+- `skipWaiting` + `clients.claim` para ativação imediata
 - Ícones SVG
 - Instalável na tela inicial
+
+---
+
+## 2.1 Deploy & Infraestrutura
+
+### Servidor
+- **VPS:** Oracle Cloud (137.131.187.156), Ubuntu
+- **App:** Next.js rodando em `0.0.0.0:3003`
+- **PM2:** Gerenciamento de processo
+- **Firewall:** iptables + UFW liberados para porta 3003
+
+### Cloudflare Tunnel
+- **Domínio:** `catequistas.housecloud.tec.br`
+- **Container:** `cloudflare/cloudflared` com `--network host`
+- **Config:** Ingress aponta para `http://localhost:3003`
+- **DNS:** Proxied via Cloudflare (HTTP/2 + QUIC)
 
 ---
 
@@ -150,6 +167,8 @@ npm install
 npm run seed        # Popular banco com dados de exemplo
 npm run dev         # http://localhost:3000
 npm run build       # Build de produção
+npm run start       # next start -p 3003 (produção)
 ```
 
 **Login de teste:** `admin@catequese.com` / `admin123`
+**Produção:** https://catequistas.housecloud.tec.br
