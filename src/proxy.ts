@@ -2,10 +2,12 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const protectedRoutes = ["/dashboard", "/encontros", "/catequistas", "/turmas", "/presenca", "/calendario", "/notificacoes", "/importar", "/relatorios"]
+const publicPaths = ["/presenca/confirmar"]
 
 export default function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname
-  const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route))
+  const isPublicPath = publicPaths.some((p) => path.startsWith(p))
+  const isProtectedRoute = !isPublicPath && protectedRoutes.some((route) => path.startsWith(route))
 
   const session = req.cookies.get("session")?.value
 

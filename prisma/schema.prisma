@@ -88,3 +88,9 @@ model RegistroPresenca {
   catequista   Catequista @relation(fields: [catequistaId], references: [id], onDelete: Cascade)
   @@unique([encontroId, catequistaId])
 }
+
+model Configuracao {
+  id    String @id @default(cuid())
+  chave String @unique
+  valor String
+}

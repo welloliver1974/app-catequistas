@@ -8,9 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { enviarNotificacaoDiscord, notificarProximoEncontro } from "@/actions/notificacoes"
+import { setConfig } from "@/actions/config"
 
-export function NotificacoesClient() {
-  const [webhookUrl, setWebhookUrl] = useState("")
+interface Props {
+  webhookSalvo: string
+}
+
+export function NotificacoesClient({ webhookSalvo }: Props) {
+  const [webhookUrl, setWebhookUrl] = useState(webhookSalvo)
   const [mensagem, setMensagem] = useState("")
   const [loading, setLoading] = useState(false)
   const [resultado, setResultado] = useState<{ success?: string; error?: string } | null>(null)
@@ -55,12 +60,26 @@ export function NotificacoesClient() {
 
             <div className="space-y-2">
               <Label htmlFor="webhook">URL do Webhook</Label>
-              <Input
-                id="webhook"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                placeholder="https://discord.com/api/webhooks/..."
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="webhook"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://discord.com/api/webhooks/..."
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await setConfig("discord_webhook_url", webhookUrl)
+                  }}
+                >
+                  Salvar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Salva permanentemente para notificações automáticas de presença.
+              </p>
             </div>
 
             <div className="space-y-2">
