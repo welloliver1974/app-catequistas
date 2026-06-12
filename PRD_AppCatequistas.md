@@ -7,7 +7,7 @@
 **Stack:**
 - **Frontend:** Next.js 16 (App Router), Tailwind CSS v4, Shadcn/ui (Nova), Framer Motion, Lucide React
 - **Backend:** Next.js Server Actions + Prisma v7 + SQLite (via LibSQL)
-- **Tema:** Dark mode fixo, verde como primária
+- **Tema:** Dark mode fixo, índigo escuro como primária
 - **Fonte:** Geist Sans
 
 **Público-alvo:** Coordenadores de catequese, catequistas e administradores paroquiais.
