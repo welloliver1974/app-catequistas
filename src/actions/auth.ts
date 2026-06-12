@@ -25,7 +25,7 @@ export async function loginAction(formData: FormData) {
   const cookieStore = await cookies()
   cookieStore.set("session", user.id, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
