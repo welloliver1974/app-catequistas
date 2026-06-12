@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const protectedRoutes = ["/dashboard", "/encontros", "/catequistas", "/turmas", "/presenca", "/calendario", "/notificacoes", "/importar", "/relatorios"]
-const publicPaths = ["/presenca/confirmar"]
+const rotasProtegidas = ["/dashboard", "/encontros", "/catequistas", "/turmas", "/calendario", "/notificacoes", "/importar", "/relatorios"]
+const rotasPublicas = ["/login", "/presenca/confirmar", "/presenca/"]
 
 export default function proxy(req: NextRequest) {
-  const path = req.nextUrl.pathname
-  const isPublicPath = publicPaths.some((p) => path.startsWith(p))
-  const isProtectedRoute = !isPublicPath && protectedRoutes.some((route) => path.startsWith(route))
+  const { pathname } = req.nextUrl
 
-  const session = req.cookies.get("session")?.value
+  if (rotasPublicas.some((r) => pathname.startsWith(r))) {
+    return NextResponse.next()
+  }
 
-  if (isProtectedRoute && !session) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl))
+  if (rotasProtegidas.some((r) => pathname.startsWith(r))) {
+    const session = req.cookies.get("session")?.value
+    if (!session) {
+      return NextResponse.redirect(new URL("/login", req.nextUrl))
+    }
   }
 
   return NextResponse.next()
