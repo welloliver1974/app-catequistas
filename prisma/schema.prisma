@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  COORDENADOR
+  CATEQUISTA
+}
+
+enum Status {
+  ATIVO
+  INATIVO
+}
+
+model User {
+  id         String      @id @default(cuid())
+  email      String      @unique
+  name       String
+  password   String
+  role       Role        @default(CATEQUISTA)
+  catequista Catequista?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Catequista {
+  id          String      @id @default(cuid())
+  nome        String
+  email       String      @unique
+  telefone    String?
+  status      Status      @default(ATIVO)
+  dataEntrada DateTime    @default(now())
+  dataSaida   DateTime?
+  observacoes String?
+  userId      String?     @unique
+  user        User?       @relation(fields: [userId], references: [id])
+  turmas      TurmaCatequista[]
+  presencas   RegistroPresenca[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Turma {
+  id          String      @id @default(cuid())
+  nome        String
+  descricao   String?
+  catequistas TurmaCatequista[]
+  encontros   Encontro[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model TurmaCatequista {
+  catequistaId String
+  turmaId      String
+  catequista   Catequista @relation(fields: [catequistaId], references: [id], onDelete: Cascade)
+  turma        Turma      @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  @@id([catequistaId, turmaId])
+}
+
+model Encontro {
+  id        String      @id @default(cuid())
+  turmaId   String
+  turma     Turma       @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  data      DateTime
+  tema      String
+  local     String?
+  linkPdf   String?
+  presencas RegistroPresenca[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model RegistroPresenca {
+  id           String     @id @default(cuid())
+  encontroId   String
+  catequistaId String
+  presente     Boolean    @default(true)
+  justificativa String?
+  confirmadoEm DateTime   @default(now())
+  encontro     Encontro   @relation(fields: [encontroId], references: [id], onDelete: Cascade)
+  catequista   Catequista @relation(fields: [catequistaId], references: [id], onDelete: Cascade)
+  @@unique([encontroId, catequistaId])
+}

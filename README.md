@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# App Catequistas
 
-## Getting Started
+Sistema de cadastro e controle de presença de catequistas.
 
-First, run the development server:
+## Início rápido
 
 ```bash
+npm install
+npx prisma generate
+npm run seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Login:** `admin@catequese.com` / `admin123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Inicia servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run seed` | Popula banco com dados de exemplo |
+| `npx prisma studio` | Abre interface do banco de dados |
 
-To learn more about Next.js, take a look at the following resources:
+## Estrutura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/` — Páginas e layouts
+- `src/components/ui/` — Componentes Shadcn/ui
+- `src/actions/auth.ts` — Server actions de autenticação
+- `src/lib/prisma.ts` — Conexão com banco
+- `prisma/schema.prisma` — Schema do banco
+- `prisma/seed.ts` — Dados de exemplo
