@@ -117,7 +117,7 @@ export function CatequistasClient({ catequistas }: { catequistas: Catequista[] }
                         <td className="py-3 px-2 text-muted-foreground hidden lg:table-cell">{c.turmas || "—"}</td>
                         <td className="py-3 px-2 text-center">
                           {c.status === "ATIVO" ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-green-500">
+                            <span className="inline-flex items-center gap-1 text-xs text-primary">
                               <CheckCircle2 className="h-3 w-3" /> Ativo
                             </span>
                           ) : (
@@ -243,7 +243,7 @@ function CatequistaForm({ catequista, onClose }: { catequista: Catequista | null
                   </Button>
                 </div>
               )}
-              {resetMsg && <p className={`text-xs mt-1 ${resetMsg.includes("sucesso") ? "text-green-500" : "text-destructive"}`}>{resetMsg}</p>}
+              {resetMsg && <p className={`text-xs mt-1 ${resetMsg.includes("sucesso") ? "text-primary" : "text-destructive"}`}>{resetMsg}</p>}
             </div>
           )}
 

@@ -22,7 +22,7 @@ function formatDate(iso: string) {
 
 function PercentBar({ value }: { value: number }) {
   const color =
-    value >= 75 ? "bg-green-500" : value >= 50 ? "bg-yellow-500" : "bg-red-500"
+    value >= 75 ? "bg-primary" : value >= 50 ? "bg-yellow-500" : "bg-red-500"
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
@@ -157,11 +157,11 @@ function IndividualView({ catequistas }: { catequistas: { id: string; nome: stri
                 <p className="text-xs text-muted-foreground">Total Encontros</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/30 text-center">
-                <p className="text-2xl font-bold text-green-500">{resultado.presentes}</p>
+                <p className="text-2xl font-bold text-primary">{resultado.presentes}</p>
                 <p className="text-xs text-muted-foreground">Presenças</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/30 text-center">
-                <p className={`text-2xl font-bold ${resultado.percentual >= 75 ? "text-green-500" : resultado.percentual >= 50 ? "text-yellow-500" : "text-red-500"}`}>
+                <p className={`text-2xl font-bold ${resultado.percentual >= 75 ? "text-primary" : resultado.percentual >= 50 ? "text-yellow-500" : "text-red-500"}`}>
                   {resultado.percentual}%
                 </p>
                 <p className="text-xs text-muted-foreground">Frequência</p>
@@ -184,7 +184,7 @@ function IndividualView({ catequistas }: { catequistas: { id: string; nome: stri
                     <td className="py-3 px-2">{p.encontroTema}</td>
                     <td className="py-3 px-2 text-center">
                       {p.presente ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 inline" />
+                        <CheckCircle2 className="h-4 w-4 text-primary inline" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500 inline" />
                       )}

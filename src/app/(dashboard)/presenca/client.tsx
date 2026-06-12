@@ -107,7 +107,7 @@ export function PresencaClient({ catequista, proximoEncontro, jaConfirmado, pres
                     <div>
                       <div className="inline-flex items-center gap-2 font-medium text-lg">
                         {ultimaResposta?.presente ? (
-                          <><CheckCircle2 className="h-6 w-6 text-green-500" /> Presença Confirmada</>
+                          <><CheckCircle2 className="h-6 w-6 text-primary" /> Presença Confirmada</>
                         ) : (
                           <><XCircle className="h-6 w-6 text-yellow-500" /> Ausência Registrada</>
                         )}
@@ -187,7 +187,7 @@ export function PresencaClient({ catequista, proximoEncontro, jaConfirmado, pres
                       )}
                     </div>
                     {h.presente ? (
-                      <span className="flex items-center gap-1 text-green-500 text-xs">
+                      <span className="flex items-center gap-1 text-primary text-xs">
                         <CheckCircle2 className="h-3 w-3" /> Presente
                       </span>
                     ) : (

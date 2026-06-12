@@ -109,7 +109,7 @@ export function ImportarClient() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`mt-6 p-4 rounded-lg border ${
                   resultado.success
-                    ? "bg-green-500/10 border-green-500/30 text-green-600"
+                    ? "bg-primary/10 border-primary/30 text-primary"
                     : "bg-red-500/10 border-red-500/30 text-red-600"
                 }`}
               >

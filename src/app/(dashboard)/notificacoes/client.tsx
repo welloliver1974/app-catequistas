@@ -90,7 +90,7 @@ export function NotificacoesClient() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
                   resultado.success
-                    ? "bg-green-500/10 text-green-600 border border-green-500/30"
+                    ? "bg-primary/10 text-primary border border-primary/30"
                     : "bg-red-500/10 text-red-600 border border-red-500/30"
                 }`}
               >

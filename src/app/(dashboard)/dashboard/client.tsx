@@ -17,7 +17,7 @@ const statIcons = {
 const statConfig = {
   catequistas: { color: "from-blue-500 to-blue-600", label: "Catequistas Ativos" },
   encontros: { color: "from-purple-500 to-purple-600", label: "Encontros" },
-  presencasHoje: { color: "from-green-500 to-emerald-600", label: "Presenças" },
+  presencasHoje: { color: "from-indigo-500 to-purple-600", label: "Presenças" },
   frequenciaMedia: { color: "from-orange-500 to-amber-600", label: "Frequência Média" },
 } as const
 
@@ -55,8 +55,8 @@ function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string
 function PulseDot() {
   return (
     <span className="relative flex h-2.5 w-2.5">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/70 opacity-75" />
+      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
     </span>
   )
 }
@@ -118,7 +118,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             <Card className="border-border/50 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between border-b border-border/20 pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   Últimas Presenças
                 </CardTitle>
                 <span className="text-xs text-muted-foreground">{data.ultimasPresencas.length} registros</span>
@@ -134,7 +134,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                         transition={{ delay: 0.4 + i * 0.05 }}
                         className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors"
                       >
-                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                         <span className="font-medium">{p.nome}</span>
                         <span className="text-muted-foreground mx-1">—</span>
                         <span className="text-muted-foreground truncate">{p.tema}</span>

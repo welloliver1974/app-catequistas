@@ -145,7 +145,7 @@ export function CalendarioClient({ encontros }: { encontros: EncontroData[] }) {
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
                       {e.confirmados}
                     </span>
                   </div>
