@@ -1,16 +1,12 @@
 "use client"
 
-import { useState } from "react"
 import { motion } from "framer-motion"
-import { Church, CheckCircle2, XCircle, ExternalLink, Loader2, MessageSquare } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { confirmarPresenca, justificarAusencia } from "@/actions/presencas"
+import { Button } from "@/components/ui/button"
 
 interface Props {
-  catequista: { id: string; nome: string }
+  user: { name: string }
   proximoEncontro: {
     id: string
     tema: string
@@ -19,188 +15,168 @@ interface Props {
     linkPdf: string
     turma: string
   } | null
-  jaConfirmado: boolean
-  presencaAtual: { presente: boolean; justificativa: string | null } | null
-  historico: { tema: string; data: string; presente: boolean; justificativa: string | null }[]
+  catequistas: {
+    id: string
+    nome: string
+    telefone: string
+    presente: boolean | null
+    justificativa: string | null
+  }[]
+  stats: { total: number; confirmados: number; ausentes: number; pendentes: number }
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR")
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 }
 
-export function PresencaClient({ catequista, proximoEncontro, jaConfirmado, presencaAtual, historico }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [respondido, setRespondido] = useState(jaConfirmado)
-  const [erro, setErro] = useState("")
-  const [modoJustificar, setModoJustificar] = useState(false)
-  const [justificativa, setJustificativa] = useState("")
-  const [ultimaResposta, setUltimaResposta] = useState<{ presente: boolean; justificativa?: string } | null>(
-    presencaAtual ? { presente: presencaAtual.presente, justificativa: presencaAtual.justificativa ?? undefined } : null
-  )
+export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats }: Props) {
+  const siteUrl = "https://catequistas.housecloud.tec.br"
 
-  async function handleConfirmar() {
-    if (!proximoEncontro) return
-    setLoading(true)
-    setErro("")
-    const res = await confirmarPresenca(proximoEncontro.id, catequista.id)
-    if (res.error) {
-      setErro(res.error)
-    } else {
-      setRespondido(true)
-      setUltimaResposta({ presente: true })
-      setModoJustificar(false)
-    }
-    setLoading(false)
-  }
+  const mensagemWhatsApp = proximoEncontro
+    ? `📅 *Próximo Encontro de Catequese*\n\n*Tema:* ${proximoEncontro.tema}\n*Data:* ${formatDate(proximoEncontro.data)}\n*Local:* ${proximoEncontro.local || proximoEncontro.turma}\n\n✅ Confirme sua presença aqui:\n${siteUrl}/presenca/confirmar`
+    : ""
 
-  async function handleJustificar() {
-    if (!proximoEncontro || !justificativa.trim()) return
-    setLoading(true)
-    setErro("")
-    const res = await justificarAusencia(proximoEncontro.id, catequista.id, justificativa)
-    if (res.error) {
-      setErro(res.error)
-    } else {
-      setRespondido(true)
-      setUltimaResposta({ presente: false, justificativa })
-      setModoJustificar(false)
-    }
-    setLoading(false)
+  function abrirWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`
+    window.open(url, "_blank")
   }
 
   return (
     <>
       <header className="h-16 border-b border-border/40 flex items-center px-6">
-        <h1 className="text-lg font-semibold">Minha Presença</h1>
+        <h1 className="text-lg font-semibold">Presença</h1>
       </header>
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
+
+      <div className="p-6 space-y-6">
         {proximoEncontro ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card className="border-border/50 text-center">
-              <CardContent className="p-8 space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Church className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Próximo Encontro</p>
-                  <h2 className="text-2xl font-bold mt-1">{proximoEncontro.tema}</h2>
-                </div>
-                <div className="flex justify-center gap-6 text-sm text-muted-foreground">
-                  <span>{formatDate(proximoEncontro.data)}</span>
-                  <span>{proximoEncontro.local || proximoEncontro.turma}</span>
-                </div>
-                {proximoEncontro.linkPdf && (
-                  <a
-                    href={proximoEncontro.linkPdf}
-                    target="_blank"
-                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Abrir Material (PDF)
-                  </a>
+          <>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Church className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium text-primary uppercase tracking-wide">Próximo Encontro</span>
+                      </div>
+                      <h2 className="text-2xl font-bold">{proximoEncontro.tema}</h2>
+                      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
+                        <span>{formatDate(proximoEncontro.data)}</span>
+                        <span>{proximoEncontro.local || proximoEncontro.turma}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {proximoEncontro.linkPdf && (
+                          <a
+                            href={proximoEncontro.linkPdf}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Material (PDF)
+                          </a>
+                        )}
+                        <a
+                          href={`${siteUrl}/presenca/confirmar`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Link público de presença
+                        </a>
+                      </div>
+                    </div>
+                    <Button onClick={abrirWhatsApp} className="shrink-0 gap-2" size="lg">
+                      <MessageCircle className="h-5 w-5" />
+                      Compartilhar no WhatsApp
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Catequistas", value: stats.total, color: "text-foreground" },
+                { label: "Confirmados", value: stats.confirmados, color: "text-primary" },
+                { label: "Ausentes", value: stats.ausentes, color: "text-yellow-500" },
+                { label: "Pendentes", value: stats.pendentes, color: "text-muted-foreground" },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="p-4 rounded-lg bg-muted/30 text-center"
+                >
+                  <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-base">Respostas dos Catequistas</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {catequistas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum catequista ativo cadastrado.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-border/20">
+                    {catequistas.map((c, i) => (
+                      <motion.div
+                        key={c.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.02 }}
+                        className="flex items-center justify-between px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{c.nome}</span>
+                          {c.justificativa && (
+                            <span className="text-xs text-muted-foreground italic max-w-xs truncate">
+                              &quot;{c.justificativa}&quot;
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {c.presente === true ? (
+                            <span className="flex items-center gap-1 text-primary text-xs font-medium">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Presente
+                            </span>
+                          ) : c.presente === false ? (
+                            <span className="flex items-center gap-1 text-yellow-500 text-xs font-medium">
+                              <XCircle className="h-3.5 w-3.5" /> Ausente
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-muted-foreground text-xs font-medium">
+                              <Clock className="h-3.5 w-3.5" /> Pendente
+                            </span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
-                <div className="pt-4">
-                  {respondido ? (
-                    <div>
-                      <div className="inline-flex items-center gap-2 font-medium text-lg">
-                        {ultimaResposta?.presente ? (
-                          <><CheckCircle2 className="h-6 w-6 text-primary" /> Presença Confirmada</>
-                        ) : (
-                          <><XCircle className="h-6 w-6 text-yellow-500" /> Ausência Registrada</>
-                        )}
-                      </div>
-                      {ultimaResposta?.justificativa && (
-                        <p className="text-sm text-muted-foreground mt-2 italic">
-                          &quot;{ultimaResposta.justificativa}&quot;
-                        </p>
-                      )}
-                    </div>
-                  ) : modoJustificar ? (
-                    <div className="space-y-3">
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="justificativa">Motivo da ausência</Label>
-                        <Input
-                          id="justificativa"
-                          value={justificativa}
-                          onChange={(e) => setJustificativa(e.target.value)}
-                          placeholder="Ex: Não poderei comparecer por motivo de saúde..."
-                        />
-                      </div>
-                      <div className="flex gap-2 justify-center">
-                        <Button variant="outline" onClick={() => setModoJustificar(false)} disabled={loading}>
-                          Voltar
-                        </Button>
-                        <Button onClick={handleJustificar} disabled={loading || !justificativa.trim()}>
-                          {loading ? "Salvando..." : "Registrar Ausência"}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex gap-3 justify-center">
-                      <Button size="lg" className="text-base px-8" onClick={handleConfirmar} disabled={loading}>
-                        {loading ? (
-                          <><Loader2 className="h-4 w-4 animate-spin" /> Confirmando...</>
-                        ) : (
-                          <><CheckCircle2 className="h-4 w-4" /> Confirmar Presença</>
-                        )}
-                      </Button>
-                      <Button size="lg" variant="outline" className="text-base px-8" onClick={() => setModoJustificar(true)} disabled={loading}>
-                        <MessageSquare className="h-4 w-4" />
-                        Justificar Ausência
-                      </Button>
-                    </div>
-                  )}
-                  {erro && <p className="text-sm text-destructive mt-2">{erro}</p>}
-                </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </>
         ) : (
           <Card className="border-border/50">
-            <CardContent className="p-8 text-center text-muted-foreground">
-              Nenhum encontro futuro agendado.
+            <CardContent className="p-12 text-center text-muted-foreground space-y-2">
+              <Church className="h-12 w-12 mx-auto opacity-30" />
+              <p className="text-base font-medium">Nenhum encontro futuro agendado</p>
+              <p className="text-sm">Crie um encontro para começar a registrar presenças.</p>
             </CardContent>
           </Card>
         )}
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base">Meu Histórico</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historico.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum registro de presença ainda.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {historico.map((h, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm py-2 border-b border-border/20 last:border-0">
-                    <div>
-                      <p className="font-medium">{h.tema}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(h.data)}</p>
-                      {h.justificativa && (
-                        <p className="text-xs text-muted-foreground mt-1 italic">&quot;{h.justificativa}&quot;</p>
-                      )}
-                    </div>
-                    {h.presente ? (
-                      <span className="flex items-center gap-1 text-primary text-xs">
-                        <CheckCircle2 className="h-3 w-3" /> Presente
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-yellow-500 text-xs">
-                        <XCircle className="h-3 w-3" /> Ausente
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </>
   )
