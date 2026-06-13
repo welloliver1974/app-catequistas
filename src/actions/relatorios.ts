@@ -97,18 +97,27 @@ export async function getRelatorioPorTurma(
     orderBy: { data: "desc" },
   })
 
+  const totalEncontros = encontros.length
+  const totalCatequistas = catequistas.length
+  let totalPresencas = 0
+  let somaPercentuais = 0
+
   const catequistasData: CatequistaFreq[] = catequistas.map((c) => {
-    const total = encontros.length
-    const presencas = c.presencas.filter((p) => p.presente).length
+    const presencasCount = c.presencas.filter((p) => p.presente).length
+    const percentual = totalEncontros > 0 ? Math.round((presencasCount / totalEncontros) * 100) : 0
+    totalPresencas += presencasCount
+    somaPercentuais += percentual
     return {
       id: c.id,
       nome: c.nome,
       turmas: c.turmas.map((t) => t.turma.nome).join(", "),
-      totalEncontros: total,
-      presencas,
-      percentual: total > 0 ? Math.round((presencas / total) * 100) : 0,
+      totalEncontros,
+      presencas: presencasCount,
+      percentual,
     }
   })
+
+  const mediaFrequencia = totalCatequistas > 0 ? Math.round(somaPercentuais / totalCatequistas) : 0
 
   return {
     encontros: encontros.map((e) => ({
@@ -117,6 +126,7 @@ export async function getRelatorioPorTurma(
       tema: e.tema,
     })),
     catequistas: catequistasData,
+    stats: { totalCatequistas, totalEncontros, totalPresencas, mediaFrequencia },
   }
 }
 

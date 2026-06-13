@@ -211,6 +211,7 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
   const [resultado, setResultado] = useState<{
     encontros: { id: string; data: string; tema: string }[]
     catequistas: CatequistaFreq[]
+    stats: { totalCatequistas: number; totalEncontros: number; totalPresencas: number; mediaFrequencia: number }
   } | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -259,8 +260,28 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
         </form>
 
         {resultado && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <p className="text-sm text-muted-foreground mb-4">{resultado.encontros.length} encontros no período</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className="text-2xl font-bold">{resultado.stats.totalCatequistas}</p>
+                <p className="text-xs text-muted-foreground">Catequistas</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className="text-2xl font-bold">{resultado.stats.totalEncontros}</p>
+                <p className="text-xs text-muted-foreground">Encontros</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className="text-2xl font-bold text-primary">{resultado.stats.totalPresencas}</p>
+                <p className="text-xs text-muted-foreground">Presenças</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className={`text-2xl font-bold ${resultado.stats.mediaFrequencia >= 75 ? "text-primary" : resultado.stats.mediaFrequencia >= 50 ? "text-yellow-500" : "text-red-500"}`}>
+                  {resultado.stats.mediaFrequencia}%
+                </p>
+                <p className="text-xs text-muted-foreground">Média Frequência</p>
+              </div>
+            </div>
+
             {resultado.catequistas.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 Nenhum catequista encontrado para esta turma.
@@ -350,14 +371,25 @@ function BaixaView() {
         </form>
 
         {resultado && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className="text-2xl font-bold">{resultado.catequistas.length}</p>
+                <p className="text-xs text-muted-foreground">Abaixo do limite</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 text-center">
+                <p className="text-2xl font-bold text-yellow-500">{limite}%</p>
+                <p className="text-xs text-muted-foreground">Limite definido</p>
+              </div>
+            </div>
+
             {resultado.catequistas.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 Nenhum catequista com baixa frequência no período.
               </p>
             ) : (
               <>
-                <p className="text-sm text-muted-foreground mb-4">{resultado.catequistas.length} catequistas abaixo de {limite}%</p>
+                <p className="text-sm text-muted-foreground">{resultado.catequistas.length} catequistas abaixo de {limite}%</p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
