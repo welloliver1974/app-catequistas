@@ -6,7 +6,6 @@ import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle } from
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DatePicker } from "@/components/ui/date-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { PresencaRow, CatequistaFreq } from "@/actions/relatorios"
@@ -247,11 +246,11 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
             </div>
             <div className="space-y-2">
               <Label>Data início</Label>
-              <DatePicker value={dataInicio} onChange={setDataInicio} placeholder="Data início" />
+              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Data fim</Label>
-              <DatePicker value={dataFim} onChange={setDataFim} placeholder="Data fim" />
+              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
             </div>
           </div>
           <Button type="submit" disabled={loading}>
@@ -358,11 +357,11 @@ function BaixaView() {
             </div>
             <div className="space-y-2">
               <Label>Data início</Label>
-              <DatePicker value={dataInicio} onChange={setDataInicio} placeholder="Data início" />
+              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Data fim</Label>
-              <DatePicker value={dataFim} onChange={setDataFim} placeholder="Data fim" />
+              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
             </div>
           </div>
           <Button type="submit" disabled={loading}>
