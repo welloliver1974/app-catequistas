@@ -153,11 +153,16 @@ export async function importarGoogleSheet(formData: FormData) {
         where: { turmas: { none: {} } },
       })
       if (orphans.length > 0) {
-        await prisma.turmaCatequista.createMany({
-          data: orphans.map((c) => ({ catequistaId: c.id, turmaId: turma.id })),
-          skipDuplicates: true,
-        })
-        resultados.push(`${orphans.length} catequistas vinculados à turma`)
+        let vinculados = 0
+        for (const c of orphans) {
+          try {
+            await prisma.turmaCatequista.create({
+              data: { catequistaId: c.id, turmaId: turma.id },
+            })
+            vinculados++
+          } catch { /* unique constraint */ }
+        }
+        resultados.push(`${vinculados} catequistas vinculados à turma`)
       }
     }
 
