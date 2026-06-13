@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ViewTransition } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
@@ -50,26 +51,36 @@ export function DashboardLayoutClient({
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Desktop Sidebar aside */}
-      <aside className="hidden md:flex w-64 border-r border-border/40 bg-card/50 flex-col shrink-0">
+      <aside style={{ viewTransitionName: "app-sidebar" }} className="hidden md:flex w-64 border-r border-border/40 bg-card/50 flex-col shrink-0">
         <div className="flex items-center gap-2 px-6 h-16 border-b border-border/40">
           <Church className="h-6 w-6 text-primary" />
           <span className="font-semibold">AppCatequistas</span>
         </div>
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                pathname === item.href || pathname.startsWith(item.href + "/")
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+            // Determina a direção com base na ordem da lista
+            const currentIndex = navItems.findIndex(
+              (n) => pathname === n.href || pathname.startsWith(n.href + "/")
+            )
+            const itemIndex = navItems.findIndex((n) => n.href === item.href)
+            const direction = itemIndex > currentIndex ? ["nav-forward"] : ["nav-back"]
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                transitionTypes={isActive ? undefined : direction}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
         <div className="p-4 border-t border-border/40 space-y-3">
           {user && (
@@ -88,13 +99,19 @@ export function DashboardLayoutClient({
       </aside>
 
       {/* Mobile Bottom Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border/40 bg-card/90 backdrop-blur-md flex items-center justify-around z-40 px-2 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+      <nav style={{ viewTransitionName: "app-bottom-nav" }} className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border/40 bg-card/90 backdrop-blur-md flex items-center justify-around z-40 px-2 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
         {bottomNavItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+          const currentIndex = bottomNavItems.findIndex(
+            (n) => pathname === n.href || pathname.startsWith(n.href + "/")
+          )
+          const itemIndex = bottomNavItems.findIndex((n) => n.href === item.href)
+          const direction = itemIndex > currentIndex ? ["nav-forward"] : ["nav-back"]
           return (
             <Link
               key={item.href}
               href={item.href}
+              transitionTypes={isActive ? undefined : direction}
               className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] transition-colors ${
                 isActive ? "text-primary font-medium" : "text-muted-foreground"
               }`}
@@ -197,7 +214,9 @@ export function DashboardLayoutClient({
       </AnimatePresence>
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
-        {children}
+        <ViewTransition name="page-content">
+          {children}
+        </ViewTransition>
       </main>
     </div>
   )

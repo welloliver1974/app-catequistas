@@ -99,3 +99,88 @@
     font-family: Arial, Helvetica, sans-serif;
   }
 }
+
+/* ── View Transitions ─────────────────────────────────────────── */
+:root {
+  --vt-duration-out: 150ms;
+  --vt-duration-in: 220ms;
+}
+
+/* Fade padrão (usado em todas as navegações sem tipo específico) */
+::view-transition-old(page-content) {
+  animation: var(--vt-duration-out) ease-in both vt-fade reverse;
+}
+::view-transition-new(page-content) {
+  animation: var(--vt-duration-in) ease-out var(--vt-duration-out) both vt-fade;
+}
+
+/* Slide para frente (→) */
+::view-transition-old(.nav-forward) {
+  --vt-slide-offset: -40px;
+  animation:
+    var(--vt-duration-out) ease-in both vt-fade reverse,
+    350ms ease-in-out both vt-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --vt-slide-offset: 40px;
+  animation:
+    var(--vt-duration-in) ease-out var(--vt-duration-out) both vt-fade,
+    350ms ease-in-out both vt-slide;
+}
+
+/* Slide para trás (←) */
+::view-transition-old(.nav-back) {
+  --vt-slide-offset: 40px;
+  animation:
+    var(--vt-duration-out) ease-in both vt-fade reverse,
+    350ms ease-in-out both vt-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --vt-slide-offset: -40px;
+  animation:
+    var(--vt-duration-in) ease-out var(--vt-duration-out) both vt-fade,
+    350ms ease-in-out both vt-slide;
+}
+
+/* Sidebar e bottom-nav ficam fixos durante a transição */
+::view-transition-group(app-sidebar) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(app-sidebar) { display: none; }
+::view-transition-new(app-sidebar) { animation: none; }
+
+::view-transition-group(app-bottom-nav) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(app-bottom-nav) { display: none; }
+::view-transition-new(app-bottom-nav) { animation: none; }
+
+/* Keyframes */
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes vt-slide {
+  from { translate: var(--vt-slide-offset, 0) 0; }
+  to   { translate: 0 0; }
+}
+
+/* Respeitar preferências de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
