@@ -236,6 +236,7 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
       </motion.div>
     </div>
   )
+}
 
 function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClose: () => void }) {
   const [data, setData] = useState(encontro ? toDateInput(encontro.data) : "")
