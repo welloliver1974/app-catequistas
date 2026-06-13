@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { criarEncontro, excluirEncontro } from "@/actions/encontros"
 import { gerarResumo, gerarSumario, gerarConteudoTema, gerarQuizEncontro } from "@/actions/ai"
-import { DatePicker } from "@/components/ui/date-picker"
 
 interface Encontro {
   id: string
@@ -423,8 +422,7 @@ function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClos
 
           <div className="space-y-2">
             <Label htmlFor="data">Data</Label>
-            <DatePicker value={data} onChange={setData} />
-            <input type="hidden" name="data" value={data} />
+            <Input id="data" name="data" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
           </div>
 
           <div className="space-y-2">
@@ -454,7 +452,8 @@ function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClos
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={salvando}>
+            <Button type="submit" disabled={salvando} className="gap-2">
+              {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
               {salvando ? "Salvando..." : encontro ? "Salvar Alterações" : "Criar Encontro"}
             </Button>
           </div>
