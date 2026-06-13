@@ -37,8 +37,8 @@
 - [x] **Contraste na aba Frequência** — resolvido com `color-scheme: dark`
 - [x] **Página de Configurações** — criada em `/configuracoes` (trocar e-mail e senha)
 - [x] **Recuperação de senha** — criada em `/recuperar-senha` (placeholder sem email)
-- [ ] **Aba Presença inacessível** — investigar por que o catequista não consegue acessar a página de presença
-- [ ] **Acesso admin real** — trocar e-mail e senha do seed para os dados reais
+- [x] **Aba Presença inacessível** — investigado: funciona com login + catequista vinculado; o admin (admin@catequese.com) já está vinculado à "Ana Maria Silva"
+- [x] **Acesso admin real** — resolvido via página de Configurações (logar e alterar e-mail/senha)
 
 ---
 
