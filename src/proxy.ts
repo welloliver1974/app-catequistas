@@ -8,7 +8,9 @@ export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (rotasPublicas.some((r) => pathname.startsWith(r))) {
-    return NextResponse.next()
+    const res = NextResponse.next()
+    res.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    return res
   }
 
   if (rotasProtegidas.some((r) => pathname.startsWith(r))) {
@@ -18,7 +20,9 @@ export default function proxy(req: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  const res = NextResponse.next()
+  res.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+  return res
 }
 
 export const config = {
