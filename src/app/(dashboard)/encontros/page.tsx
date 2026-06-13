@@ -20,6 +20,7 @@ export default async function EncontrosPage() {
     linkPdf: e.linkPdf ?? "",
     turma: e.turma.nome,
     totalPresencas: e._count.presencas,
+    resumo: e.resumo,
   }))
 
   return <EncontrosClient encontros={encontrosData} />

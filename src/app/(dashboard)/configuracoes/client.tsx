@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive } from "lucide-react"
+import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { changeEmail, resetPassword } from "@/actions/auth"
+import { salvarConfigAi, getConfigAi } from "@/actions/ai"
+import { MODELOS_SUGERIDOS } from "@/lib/ai"
 
 interface Backup {
   name: string
@@ -15,11 +17,24 @@ interface Backup {
   date: string
 }
 
-interface Props {
-  user: { id: string; email: string; name: string }
+interface AiConfig {
+  provider: string
+  apiKey: string
+  model: string
 }
 
-export function ConfiguracoesClient({ user }: Props) {
+interface Props {
+  user: { id: string; email: string; name: string }
+  aiConfig: AiConfig
+}
+
+export function ConfiguracoesClient({ user, aiConfig }: Props) {
+  const [aiProvider, setAiProvider] = useState(aiConfig.provider)
+  const [aiApiKey, setAiApiKey] = useState(aiConfig.apiKey)
+  const [aiModel, setAiModel] = useState(aiConfig.model)
+  const [showKey, setShowKey] = useState(false)
+  const [savingAi, setSavingAi] = useState(false)
+  const [msgAi, setMsgAi] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [email, setEmail] = useState(user.email)
   const [senhaAtual, setSenhaAtual] = useState("")
   const [novaSenha, setNovaSenha] = useState("")
@@ -143,6 +158,95 @@ export function ConfiguracoesClient({ user }: Props) {
                 >
                   {msgPass.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                   {msgPass.text}
+                </motion.p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="h-4 w-4" /> Inteligência Artificial
+            </CardTitle>
+            <CardDescription>Configure a IA para gerar resumos de encontros e responder perguntas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                setSavingAi(true)
+                setMsgAi(null)
+                const formData = new FormData()
+                formData.set("provider", aiProvider)
+                formData.set("apiKey", aiApiKey)
+                formData.set("model", aiModel)
+                await salvarConfigAi(formData)
+                setMsgAi({ type: "success", text: "Configuração salva!" })
+                setSavingAi(false)
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label>Provedor</Label>
+                <select
+                  value={aiProvider}
+                  onChange={(e) => setAiProvider(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="groq">Groq (grátis)</option>
+                  <option value="openrouter">OpenRouter</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Chave da API</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type={showKey ? "text" : "password"}
+                    value={aiApiKey}
+                    onChange={(e) => setAiApiKey(e.target.value)}
+                    placeholder={aiProvider === "groq" ? "gsk_..." : "sk-or-..."}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    className="p-2 rounded hover:bg-muted transition-colors"
+                  >
+                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Modelo</Label>
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  {MODELOS_SUGERIDOS
+                    .filter((m) => m.provider === aiProvider)
+                    .map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                </select>
+              </div>
+
+              <Button type="submit" disabled={savingAi} size="sm" className="gap-2">
+                {savingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {savingAi ? "Salvando..." : "Salvar Configuração"}
+              </Button>
+
+              {msgAi && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`text-sm flex items-center gap-1 ${msgAi.type === "success" ? "text-primary" : "text-destructive"}`}
+                >
+                  {msgAi.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                  {msgAi.text}
                 </motion.p>
               )}
             </form>

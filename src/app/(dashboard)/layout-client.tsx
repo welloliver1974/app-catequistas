@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Download, Settings, LogOut } from "lucide-react"
+import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Download, Settings, LogOut, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/actions/auth"
 
@@ -21,6 +21,7 @@ const navItems = [
   { icon: Download, label: "Exportar", href: "/relatorios/exportar" },
   { icon: ClipboardCheck, label: "Painel Admin", href: "/presenca" },
   { icon: CalendarDays, label: "Calendário", href: "/calendario" },
+  { icon: Bot, label: "Assistente IA", href: "/assistente" },
   { icon: Database, label: "Importar", href: "/importar" },
   { icon: Bell, label: "Notificações", href: "/notificacoes" },
   { icon: Settings, label: "Configurações", href: "/configuracoes" },

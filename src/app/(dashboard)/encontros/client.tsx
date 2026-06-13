@@ -2,12 +2,13 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react"
+import { Plus, Pencil, Trash2, ExternalLink, Sparkles, FileText, Loader2, BrainCircuit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { criarEncontro, excluirEncontro } from "@/actions/encontros"
+import { gerarResumo, gerarSumario } from "@/actions/ai"
 import { DatePicker } from "@/components/ui/date-picker"
 
 interface Encontro {
@@ -18,6 +19,7 @@ interface Encontro {
   linkPdf: string
   turma: string
   totalPresencas: number
+  resumo: string | null
 }
 
 function formatDate(iso: string) {
@@ -31,6 +33,7 @@ function toDateInput(iso: string) {
 export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
   const [aberto, setAberto] = useState(false)
   const [editando, setEditando] = useState<Encontro | null>(null)
+  const [detalhe, setDetalhe] = useState<Encontro | null>(null)
   const [search, setSearch] = useState("")
 
   const filtrados = encontros.filter((e) =>
@@ -118,6 +121,9 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
                                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
                               </a>
                             )}
+                            <button onClick={() => setDetalhe(e)} className="p-1.5 rounded hover:bg-primary/10 transition-colors" title="Resumo do Encontro">
+                              <Sparkles className="h-4 w-4 text-primary" />
+                            </button>
                             <button onClick={() => abrirEditar(e)} className="p-1.5 rounded hover:bg-muted transition-colors">
                               <Pencil className="h-4 w-4 text-muted-foreground" />
                             </button>
@@ -137,9 +143,99 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
       </div>
 
       {aberto && <EncontroForm encontro={editando} onClose={fechar} />}
+      {detalhe && <EncontroDetalhe encontro={detalhe} onClose={() => setDetalhe(null)} />}
     </>
   )
 }
+
+function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: () => void }) {
+  const [resumo, setResumo] = useState(encontro.resumo || "")
+  const [inputTexto, setInputTexto] = useState("")
+  const [gerando, setGerando] = useState(false)
+  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  async function handleGerarResumo() {
+    if (!inputTexto.trim()) return
+    setGerando(true)
+    setMsg(null)
+    const res = await gerarResumo(encontro.id, inputTexto)
+    if (res.resumo) setResumo(res.resumo)
+    setMsg({ type: res.success ? "success" : "error", text: res.success || res.error || "" })
+    setGerando(false)
+  }
+
+  async function handleGerarSumario() {
+    setGerando(true)
+    setMsg(null)
+    const res = await gerarSumario(encontro.id)
+    setMsg({ type: res.success ? "success" : "error", text: res.success || res.error || "" })
+    setGerando(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-card border border-border/50 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{encontro.tema}</h2>
+            <span className="text-sm text-muted-foreground">{new Date(encontro.data).toLocaleDateString("pt-BR")}</span>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Texto do Coordenador</Label>
+            <textarea
+              value={inputTexto}
+              onChange={(e) => setInputTexto(e.target.value)}
+              placeholder="Descreva o que foi discutido no encontro..."
+              className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm resize-y focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            <Button onClick={handleGerarResumo} disabled={gerando || !inputTexto.trim()} size="sm" className="gap-2">
+              {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {gerando ? "Gerando..." : "Gerar Resumo com IA"}
+            </Button>
+          </div>
+
+          {resumo && (
+            <div className="space-y-2">
+              <Label>Resumo</Label>
+              <div className="p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-wrap leading-relaxed">
+                {resumo}
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-border/40 pt-4">
+            <Button onClick={handleGerarSumario} disabled={gerando} variant="outline" size="sm" className="gap-2">
+              {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
+              {gerando ? "Gerando..." : "Gerar Sumário Automático"}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Sumário executivo com dados de presença, ausências e justificativas.
+            </p>
+          </div>
+
+          {msg && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`text-sm flex items-center gap-1 ${msg.type === "success" ? "text-primary" : "text-destructive"}`}
+            >
+              {msg.type === "success" ? <FileText className="h-3 w-3" /> : null}
+              {msg.text}
+            </motion.p>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
 
 function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClose: () => void }) {
   const [data, setData] = useState(encontro ? toDateInput(encontro.data) : "")

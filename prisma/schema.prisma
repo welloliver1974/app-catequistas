@@ -72,6 +72,7 @@ model Encontro {
   tema      String
   local     String?
   linkPdf   String?
+  resumo    String?     @default("")
   presencas RegistroPresenca[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
