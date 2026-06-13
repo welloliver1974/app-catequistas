@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { PresencaRow, CatequistaFreq } from "@/actions/relatorios"
 
@@ -123,19 +124,16 @@ function IndividualView({ catequistas }: { catequistas: { id: string; nome: stri
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="catequista">Catequista</Label>
-              <select
-                id="catequista"
-                value={catequistaId}
-                onChange={(e) => setCatequistaId(e.target.value)}
-                required
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                style={{ colorScheme: "dark" }}
-              >
-                <option value="" className="bg-card text-card-foreground">Selecione...</option>
-                {catequistas.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
+              <Select value={catequistaId} onValueChange={setCatequistaId}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {catequistas.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dataInicio">Data início</Label>
@@ -233,18 +231,16 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="turma">Turma</Label>
-              <select
-                id="turma"
-                value={turmaId}
-                onChange={(e) => setTurmaId(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                style={{ colorScheme: "dark" }}
-              >
-                <option value="" className="bg-card text-card-foreground">Todas as turmas</option>
-                {turmas.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nome}</option>
-                ))}
-              </select>
+              <Select value={turmaId} onValueChange={setTurmaId}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todas as turmas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {turmas.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Data início</Label>
