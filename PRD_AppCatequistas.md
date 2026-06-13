@@ -73,6 +73,7 @@
 ### Inteligência Artificial
 - Suporte a Groq (grátis) e OpenRouter
 - **Resumo do Tema**: coordenador descreve o encontro, IA estrutura em assunto, pontos, reflexão, avisos
+- **Conteúdo do Tema**: só com o nome do encontro, IA gera explicação, passagens bíblicas, reflexão e perguntas
 - **Sumário automático**: IA gera resumo executivo com dados de presença, ausências e justificativas
 - **Assistente**: chat em `/assistente` que responde perguntas sobre os dados em linguagem natural
 - Configuração de provedor, chave e modelo em Configurações
