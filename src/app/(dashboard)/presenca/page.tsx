@@ -16,11 +16,19 @@ export default async function PresencaPage() {
   })
   if (!user) redirect("/login")
 
-  const proximoEncontro = await prisma.encontro.findFirst({
+  // Tenta encontro futuro; se não houver, usa o mais recente (passado)
+  let proximoEncontro = await prisma.encontro.findFirst({
     where: { data: { gte: new Date() } },
     orderBy: { data: "asc" },
     include: { turma: { select: { nome: true } } },
   })
+  const isPassado = !proximoEncontro
+  if (!proximoEncontro) {
+    proximoEncontro = await prisma.encontro.findFirst({
+      orderBy: { data: "desc" },
+      include: { turma: { select: { nome: true } } },
+    })
+  }
 
   let presencas: { catequistaId: string; presente: boolean; justificativa: string | null }[] = []
   let catequistas: { id: string; nome: string; telefone: string | null }[] = []
@@ -60,6 +68,7 @@ export default async function PresencaPage() {
         local: proximoEncontro.local ?? "",
         linkPdf: proximoEncontro.linkPdf ?? "",
         turma: proximoEncontro.turma.nome,
+        isPassado,
       } : null}
       catequistas={catequistas.map((c) => ({
         id: c.id,

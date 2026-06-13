@@ -33,7 +33,7 @@ const bottomNavItems = [
   { icon: BarChart3, label: "Dashboard", href: "/dashboard" },
   { icon: Church, label: "Encontros", href: "/encontros" },
   { icon: Users, label: "Catequistas", href: "/catequistas" },
-  { icon: ClipboardCheck, label: "Presença", href: "/presenca" },
+  { icon: ClipboardCheck, label: "Admin", href: "/presenca" },
 ]
 
 export function DashboardLayoutClient({

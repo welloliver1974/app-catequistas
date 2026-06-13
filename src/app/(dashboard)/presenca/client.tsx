@@ -14,6 +14,7 @@ interface Props {
     local: string
     linkPdf: string
     turma: string
+    isPassado?: boolean
   } | null
   catequistas: {
     id: string
@@ -62,7 +63,14 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                     <div className="space-y-3 flex-1">
                       <div className="flex items-center gap-2">
                         <Church className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium text-primary uppercase tracking-wide">Próximo Encontro</span>
+                        <span className="text-sm font-medium text-primary uppercase tracking-wide">
+                          {proximoEncontro.isPassado ? "Último Encontro" : "Próximo Encontro"}
+                        </span>
+                        {proximoEncontro.isPassado && (
+                          <span className="text-xs bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium">
+                            Sem encontro futuro agendado
+                          </span>
+                        )}
                       </div>
                       <h2 className="text-2xl font-bold">{proximoEncontro.tema}</h2>
                       <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
