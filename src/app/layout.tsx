@@ -44,7 +44,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#22c55e" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground" style={{ backgroundColor: "#0a0a0f", colorScheme: "dark" }}>
         {children}
         <PWARegister />
       </body>
