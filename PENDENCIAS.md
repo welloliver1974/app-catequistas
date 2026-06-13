@@ -20,34 +20,24 @@
 
 ---
 
-## 🔲 Fase 1 — Essencial
+## 🔲 Fase 1 — Essencial (✅ Concluído)
 
-| Tarefa | Tempo | Status |
-|---|---|---|
-| **CRUD de Turmas** (vincular catequistas) | ~20 min | Pendente |
-| **Importar dados do Google Sheets** | ~20 min | Pendente |
-
-## 🔲 Fase 2 — Relatórios
-
-| Tarefa | Tempo | Status |
-|---|---|---|
-| **Relatórios de frequência** (individual/turma) | ~30 min | Pendente |
-| **Exportação CSV/PDF** | ~30 min | Pendente |
-| **Justificativa de ausência** | ~15 min | Pendente |
-| **Dashboard com gráficos** | ~20 min | Pendente |
+## 🔲 Fase 2 — Relatórios (✅ Concluído)
 
 ## 🔲 Fase 3 — Avançado
 
 | Tarefa | Tempo | Status |
 |---|---|---|
-| **Notificações WhatsApp** | ~1h | Pendente |
-| **Notificações E-mail** | ~30 min | Pendente |
-| **Upload de PDF dos encontros** | ~20 min | Pendente |
-| **PWA** (instalável) | ~30 min | Pendente |
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha** | ~15 min | Pendente |
 
-### 📎 Sobre o Upload de PDF dos Encontros
+### 🔲 Sugestões Futuras
+
+- [ ] **Date picker nos campos de data** — substituir `<input type="date">` por um calendário visual (ex: shadcn/ui Popover + Calendar) em formulários de encontro, relatórios, etc.
+
+---
+
+## 📎 Sobre o Upload de PDF dos Encontros
 **Decisão a tomar quando for implementar:**
 
 **Opção A — Upload local** (~20 min)
