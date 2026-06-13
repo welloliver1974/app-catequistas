@@ -38,7 +38,7 @@ function formatDate(iso: string) {
 
 export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats }: Props) {
   const siteUrl = "https://catequistas.housecloud.tec.br"
-  const [mensagemModal, setMensagemModal] = useState<{ nome: string; texto: string } | null>(null)
+  const [mensagemModal, setMensagemModal] = useState<{ nome: string; texto: string; telefone: string } | null>(null)
   const [gerandoMsg, setGerandoMsg] = useState<string | null>(null) // catequistaId sendo gerado
   const [copiado, setCopiado] = useState(false)
 
@@ -51,13 +51,13 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
     window.open(url, "_blank")
   }
 
-  async function handleGerarMensagem(catequistaId: string, nome: string) {
+  async function handleGerarMensagem(catequistaId: string, nome: string, telefone: string) {
     if (!proximoEncontro) return
     setGerandoMsg(catequistaId)
     const { gerarMensagemCatequista } = await import("@/actions/ai")
     const res = await gerarMensagemCatequista(catequistaId, proximoEncontro.id)
     if (res.mensagem) {
-      setMensagemModal({ nome, texto: res.mensagem })
+      setMensagemModal({ nome, texto: res.mensagem, telefone })
     }
     setGerandoMsg(null)
   }
@@ -85,13 +85,21 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
             <div className="p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-wrap leading-relaxed">
               {mensagemModal.texto}
             </div>
+            {!mensagemModal.telefone && (
+              <p className="text-xs text-muted-foreground text-center">
+                Catequista sem telefone cadastrado. A mensagem vai abrir sem destinatário.
+              </p>
+            )}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="gap-2" onClick={() => copiarMensagem(mensagemModal.texto)}>
                 <Copy className="h-4 w-4" />
                 {copiado ? "Copiado!" : "Copiar"}
               </Button>
               <Button size="sm" className="gap-2" onClick={() => {
-                const url = `https://wa.me/?text=${encodeURIComponent(mensagemModal.texto)}`
+                const num = mensagemModal.telefone?.replace(/\D/g, "")
+                const url = num
+                  ? `https://wa.me/55${num}?text=${encodeURIComponent(mensagemModal.texto)}`
+                  : `https://wa.me/?text=${encodeURIComponent(mensagemModal.texto)}`
                 window.open(url, "_blank")
               }}>
                 <MessageCircle className="h-4 w-4" />
@@ -223,7 +231,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                           {(c.presente === false || c.presente === null) && proximoEncontro && (
                             <button
                               title="Gerar mensagem IA"
-                              onClick={() => handleGerarMensagem(c.id, c.nome)}
+                              onClick={() => handleGerarMensagem(c.id, c.nome, c.telefone)}
                               disabled={gerandoMsg === c.id}
                               className="p-1 rounded hover:bg-primary/10 transition-colors text-primary"
                             >
