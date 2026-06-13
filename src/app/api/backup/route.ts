@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const dbPath = join(process.cwd(), "prisma", "dev.db")
+    const dbPath = join(process.cwd(), "dev.db")
     const buffer = await readFile(dbPath)
     const filename = `catequistas-backup-${new Date().toISOString().split("T")[0]}.db`
 

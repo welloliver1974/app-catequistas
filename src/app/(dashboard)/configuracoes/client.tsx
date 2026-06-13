@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Save, Mail, Lock, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Save, Mail, Lock, Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -140,6 +140,22 @@ export function ConfiguracoesClient({ user }: Props) {
                 </motion.p>
               )}
             </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Download className="h-4 w-4" /> Backup do Banco
+            </CardTitle>
+            <CardDescription>Baixe uma cópia completa do banco de dados.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <a href="/api/backup" download>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" /> Baixar Backup (.db)
+              </Button>
+            </a>
           </CardContent>
         </Card>
       </div>
