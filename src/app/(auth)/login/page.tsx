@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import Link from "next/link"
 import { Church, Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,9 +95,9 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="text-right">
-                  <button type="button" onClick={() => alert("Fale com o administrador para redefinir sua senha.")} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                  <Link href="/recuperar-senha" className="text-xs text-muted-foreground hover:text-primary transition-colors">
                     Esqueceu a senha?
-                  </button>
+                  </Link>
                 </div>
               </div>
 

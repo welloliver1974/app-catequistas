@@ -53,6 +53,18 @@ export async function resetPassword(userId: string, newPassword: string) {
   return { success: true }
 }
 
+export async function changeEmail(userId: string, newEmail: string) {
+  const existing = await prisma.user.findUnique({ where: { email: newEmail } })
+  if (existing) {
+    return { error: "Este e-mail já está em uso." }
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { email: newEmail },
+  })
+  return { success: true }
+}
+
 export async function getUser() {
   const cookieStore = await cookies()
   const userId = cookieStore.get("session")?.value

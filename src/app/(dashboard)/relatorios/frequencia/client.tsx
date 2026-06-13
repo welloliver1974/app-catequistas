@@ -6,6 +6,7 @@ import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle } from
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { PresencaRow, CatequistaFreq } from "@/actions/relatorios"
 
@@ -244,12 +245,12 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dataInicio">Data início</Label>
-              <Input id="dataInicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <Label>Data início</Label>
+              <DatePicker value={dataInicio} onChange={setDataInicio} placeholder="Data início" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dataFim">Data fim</Label>
-              <Input id="dataFim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              <Label>Data fim</Label>
+              <DatePicker value={dataFim} onChange={setDataFim} placeholder="Data fim" />
             </div>
           </div>
           <Button type="submit" disabled={loading}>
@@ -323,12 +324,12 @@ function BaixaView() {
               <Input id="limite" type="number" min={0} max={100} value={limite} onChange={(e) => setLimite(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dataInicio">Data início</Label>
-              <Input id="dataInicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <Label>Data início</Label>
+              <DatePicker value={dataInicio} onChange={setDataInicio} placeholder="Data início" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dataFim">Data fim</Label>
-              <Input id="dataFim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              <Label>Data fim</Label>
+              <DatePicker value={dataFim} onChange={setDataFim} placeholder="Data fim" />
             </div>
           </div>
           <Button type="submit" disabled={loading}>

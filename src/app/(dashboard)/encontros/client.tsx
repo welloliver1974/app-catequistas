@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { criarEncontro, excluirEncontro } from "@/actions/encontros"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface Encontro {
   id: string
@@ -141,6 +142,7 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
 }
 
 function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClose: () => void }) {
+  const [data, setData] = useState(encontro ? toDateInput(encontro.data) : "")
   const [salvando, setSalvando] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -170,7 +172,8 @@ function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClos
 
           <div className="space-y-2">
             <Label htmlFor="data">Data</Label>
-            <Input id="data" name="data" type="date" defaultValue={encontro ? toDateInput(encontro.data) : ""} required />
+            <DatePicker value={data} onChange={setData} />
+            <input type="hidden" name="data" value={data} />
           </div>
 
           <div className="space-y-2">
