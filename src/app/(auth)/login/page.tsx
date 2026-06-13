@@ -124,7 +124,7 @@ export default function LoginPage() {
             </form>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Teste: <strong>admin@catequese.com</strong> / <strong>admin123</strong>
+              App Catequistas v1.0
             </p>
           </CardContent>
         </Card>

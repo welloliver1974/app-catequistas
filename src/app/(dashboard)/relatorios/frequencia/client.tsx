@@ -129,8 +129,9 @@ function IndividualView({ catequistas }: { catequistas: { id: string; nome: stri
                 onChange={(e) => setCatequistaId(e.target.value)}
                 required
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                style={{ colorScheme: "dark" }}
               >
-                <option value="">Selecione...</option>
+                <option value="" className="bg-card text-card-foreground">Selecione...</option>
                 {catequistas.map((c) => (
                   <option key={c.id} value={c.id}>{c.nome}</option>
                 ))}
@@ -237,8 +238,9 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
                 value={turmaId}
                 onChange={(e) => setTurmaId(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                style={{ colorScheme: "dark" }}
               >
-                <option value="">Todas as turmas</option>
+                <option value="" className="bg-card text-card-foreground">Todas as turmas</option>
                 {turmas.map((t) => (
                   <option key={t.id} value={t.id}>{t.nome}</option>
                 ))}
