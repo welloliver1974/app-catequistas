@@ -1,4 +1,4 @@
-const CACHE = "app-catequistas-v2"
+const CACHE = "app-catequistas-v3"
 
 const STATIC_ASSETS = [
   "/manifest.json",
