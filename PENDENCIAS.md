@@ -1,95 +1,52 @@
 # Pendências - App Catequistas
 
-## ✅ Concluído (18/06/2026)
+## ✅ Concluído
 
 - [x] Projeto Next.js 16 configurado e buildando
 - [x] Tema escuro fixo com Tailwind v4 + Shadcn/ui (Nova)
 - [x] Landing page com animações (Framer Motion)
 - [x] Tela de login com autenticação real (server action + cookie)
 - [x] Dashboard com sidebar, cards de estatísticas e dados reais
-- [x] Banco SQLite com Prisma v7 (6 tabelas relacionais)
-- [x] Seed com dados de exemplo (12 catequistas, 5 encontros, 60 presenças)
-- [x] Proxy protegendo rotas (login obrigatório)
+- [x] Banco SQLite com Prisma v7 (7 tabelas relacionais)
+- [x] Seed com 85 catequistas reais (Forania Santo Andre Centro)
+- [x] Proxy protegendo rotas (login obrigatório) + Cache-Control headers
 - [x] Logout funcional
-- [x] **CRUD de Encontros** (criar, editar, excluir, listar)
-- [x] **CRUD de Catequistas** (criar, editar, excluir, listar, status ativo/inativo)
-- [x] **Página de Presença** (catequista confirma presença no próximo encontro)
-- [x] Layout compartilhado com sidebar entre todas as páginas
-- [x] Rota de diagnóstico: `/api/health`
-- [x] PRD e pendências documentados
+- [x] CRUD de Encontros (criar, editar, excluir, listar) + upload PDF + DatePicker
+- [x] CRUD de Catequistas (criar, editar, excluir, listar, status ativo/inativo)
+- [x] CRUD de Turmas (criar, editar, excluir, listar)
+- [x] Painel Admin (`/presenca`) — card próximo encontro, WhatsApp share, stats, lista catequistas
+- [x] Página pública de presença (`/presenca/confirmar`) — sem login
+- [x] Discord automático ao confirmar presença / justificar ausência
+- [x] Relatórios de Frequência (Individual, Por Turma, Baixa Frequência) — formatação idêntica
+- [x] Exportar CSV (catequistas, encontros, presenças, frequência)
+- [x] Calendário mensal com encontros destacados
+- [x] Importar via Google Sheets API
+- [x] Backup do banco (`/api/backup` + botão em Configurações)
+- [x] Configurações (alterar e-mail e senha)
+- [x] Recuperação de senha (placeholder)
+- [x] Notificações Discord configuráveis
+- [x] PWA (manifest + service worker v3 + ícones)
+- [x] Deploy via Cloudflare Tunnel (catequistas.housecloud.tec.br)
+- [x] Tema índigo (HSL 245)
+- [x] Select Radix (substitui native select branco)
+- [x] Calendar/Popover/DatePicker custom (sem date-fns)
+- [x] Color-scheme fix (inline no body)
+- [x] Service worker v3 com reg.update() forçado
 
----
-
-## 🔲 Fase 1 — Essencial (✅ Concluído)
-
-## 🔲 Fase 2 — Relatórios (✅ Concluído)
-
-## 🔲 Fase 3 — Avançado
+## 🔲 Pendente
 
 | Tarefa | Tempo | Status |
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
-| **Recuperação de senha** | ~15 min | Pendente |
-
-### 🔲 Sugestões Futuras
-
-- [x] **Date picker nos campos de data** — substituído por calendário visual (Calendar + Popover) em encontros e relatórios
-- [x] **Contraste na aba Frequência** — resolvido com `color-scheme: dark`
-- [x] **Página de Configurações** — criada em `/configuracoes` (trocar e-mail e senha)
-- [x] **Recuperação de senha** — criada em `/recuperar-senha` (placeholder sem email)
-- [x] **Aba Presença inacessível** — investigado: funciona com login + catequista vinculado; o admin (admin@catequese.com) já está vinculado à "Ana Maria Silva"
-- [x] **Acesso admin real** — resolvido via página de Configurações (logar e alterar e-mail/senha)
+| **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
+| **Systemd service** para auto-start no boot | ~15 min | Pendente |
+| **Limpeza de processos zumbis** (root/opc next-server) | ~15 min | Pendente |
 
 ---
 
-## 📎 Sobre o Upload de PDF dos Encontros
-**Decisão a tomar quando for implementar:**
+## 🔑 Acesso
 
-**Opção A — Upload local** (~20 min)
-- Salvar PDF em `public/uploads/encontros/`
-- Armazenar só o caminho no banco (`encontro.linkPdf`)
-- Prós: simples, sem dependência externa
-- Contras: ocupa espaço no servidor (mas PDF de material catequético é leve — ~200KB a 2MB cada)
-
-**Opção B — Google Drive** (~15 min)
-- Catequista sobe o PDF no Drive, cola o link de compartilhamento
-- Armazenar a URL no banco (`encontro.linkPdf`)
-- Prós: não ocupa espaço no servidor, catequista gerencia os próprios arquivos
-- Contras: depende de internet, precisa gerenciar permissões de acesso
-
----
-
-## 💻 Como Rodar
-
-```bash
-npm run dev        # Iniciar servidor (http://localhost:3000)
-npm run seed       # Popular banco com dados de exemplo
-npm run build      # Build de produção
-```
-
-## 🔑 Login de Teste
-
-- **Admin:** `admin@catequese.com` / `admin123`
-- Admin está vinculado à catequista **Ana Maria Silva**
-
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── (auth)/login/         # Login
-│   ├── (dashboard)/
-│   │   ├── layout.tsx        # Layout com sidebar
-│   │   ├── dashboard/        # Página inicial
-│   │   ├── encontros/        # CRUD Encontros
-│   │   ├── catequistas/      # CRUD Catequistas
-│   │   └── presenca/         # Confirmar presença
-│   └── api/health/           # Diagnóstico
-├── actions/
-│   ├── auth.ts               # Login/logout
-│   ├── encontros.ts          # CRUD encontros
-│   ├── catequistas.ts        # CRUD catequistas
-│   └── presencas.ts          # Confirmar presença
-└── components/ui/            # Componentes Shadcn
-```
+- **Admin:** `welloliver@gmail.com` (senha definida pelo usuário)
+- **Produção:** https://catequistas.housecloud.tec.br
+- **Página pública:** https://catequistas.housecloud.tec.br/presenca/confirmar
+- **VPS:** `ssh -i ~/.ssh/vps_key ubuntu@137.131.187.156`
