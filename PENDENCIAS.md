@@ -34,8 +34,10 @@
 ### 🔲 Sugestões Futuras
 
 - [ ] **Date picker nos campos de data** — substituir `<input type="date">` por um calendário visual (ex: shadcn/ui Popover + Calendar) em formulários de encontro, relatórios, etc.
-- [ ] **Página de Configurações** — permitir que o admin troque e-mail e senha de login (sem depender de seed/reseed)
 - [ ] **Aba Presença inacessível** — investigar por que o catequista não consegue acessar a página de presença
+- [ ] **Contraste na aba Frequência** — fundo branco e nome do catequista branco, difícil de visualizar
+- [ ] **Página de Configurações** — permitir que o admin troque e-mail e senha de login (sem depender de seed/reseed)
+- [ ] **Acesso admin real** — trocar e-mail e senha do seed para os dados reais do usuário
 
 ---
 
