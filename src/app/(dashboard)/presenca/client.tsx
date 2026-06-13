@@ -43,7 +43,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
   const [copiado, setCopiado] = useState(false)
 
   const mensagemWhatsApp = proximoEncontro
-    ? `📢 *Próximo Encontro de Catequese*\n📅 ${new Date(proximoEncontro.data).toLocaleDateString("pt-BR")}\n📍 ${proximoEncontro.local || proximoEncontro.turma}\n📎 ${proximoEncontro.tema}\n\n🙏 Confirme sua presença:\n${siteUrl}/presenca/confirmar`
+    ? `*Proximo Encontro de Catequese*\nData: ${new Date(proximoEncontro.data).toLocaleDateString("pt-BR")}\nLocal: ${proximoEncontro.local || proximoEncontro.turma}\nTema: ${proximoEncontro.tema}\n\nConfirme sua presenca:\n${siteUrl}/presenca/confirmar`
     : ""
 
   function abrirWhatsApp() {
