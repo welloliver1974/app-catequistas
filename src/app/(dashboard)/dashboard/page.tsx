@@ -10,6 +10,7 @@ async function getDashboardData() {
     totalPresencas,
     ultimasPresencas,
     proximosEncontros,
+    encontrosRecentes,
   ] = await Promise.all([
     prisma.catequista.count({ where: { status: "ATIVO" } }),
     prisma.encontro.count(),
@@ -31,6 +32,13 @@ async function getDashboardData() {
         _count: { select: { presencas: true } },
       },
     }),
+    prisma.encontro.findMany({
+      take: 6,
+      orderBy: { data: "desc" },
+      include: {
+        presencas: { select: { presente: true } },
+      },
+    }),
   ])
 
   const totalRegistros = await prisma.registroPresenca.count()
@@ -39,6 +47,19 @@ async function getDashboardData() {
       ? Math.round((totalPresencas / totalRegistros) * 100)
       : 0
 
+  const historicoFrequencia = encontrosRecentes
+    .map((e) => {
+      const total = e.presencas.length
+      const presentes = e.presencas.filter((p) => p.presente).length
+      const percentual = total > 0 ? Math.round((presentes / total) * 100) : 0
+      return {
+        data: e.data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        percentual,
+        tema: e.tema,
+      }
+    })
+    .reverse()
+
   return {
     stats: {
       catequistas: totalCatequistas,
@@ -46,6 +67,7 @@ async function getDashboardData() {
       presencasHoje: ultimasPresencas.length,
       frequenciaMedia,
     },
+    historicoFrequencia,
     ultimasPresencas: ultimasPresencas.map((p) => ({
       nome: p.catequista.nome,
       tema: p.encontro.tema,
