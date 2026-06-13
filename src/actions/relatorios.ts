@@ -26,9 +26,10 @@ export async function getRelatorioIndividual(
 ) {
   const where: Record<string, unknown> = { catequistaId }
   if (dataInicio || dataFim) {
-    where.encontro = {} as Record<string, unknown>
-    if (dataInicio) (where.encontro as Record<string, unknown>).gte = new Date(dataInicio)
-    if (dataFim) (where.encontro as Record<string, unknown>).lte = new Date(dataFim)
+    const dataFilter: Record<string, unknown> = {}
+    if (dataInicio) dataFilter.gte = new Date(dataInicio)
+    if (dataFim) dataFilter.lte = new Date(dataFim)
+    where.encontro = { data: dataFilter }
   }
 
   const presencas = await prisma.registroPresenca.findMany({

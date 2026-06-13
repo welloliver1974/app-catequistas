@@ -82,15 +82,15 @@ export function CalendarioClient({ encontros }: { encontros: EncontroData[] }) {
         </div>
 
         <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-7 gap-1">
+          <CardContent className="p-3 sm:p-4">
+            <div className="grid grid-cols-7 gap-px bg-border/30">
               {WEEKDAYS.map((d) => (
-                <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">
+                <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2 bg-background">
                   {d}
                 </div>
               ))}
               {dias.map((dia, i) => {
-                if (dia === null) return <div key={`e${i}`} />
+                if (dia === null) return <div key={`e${i}`} className="bg-background" />
                 const encontrosDoDia = temEncontro(dia)
                 const isHoje = new Date(ano, mes, dia).toDateString() === hojeStr
                 return (
@@ -98,20 +98,23 @@ export function CalendarioClient({ encontros }: { encontros: EncontroData[] }) {
                     key={dia}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.01 }}
-                    className={`min-h-20 p-1 rounded-lg border text-sm transition-colors ${
+                    transition={{ delay: i * 0.005 }}
+                    className={`min-h-16 sm:min-h-20 p-1.5 bg-background ${
                       isHoje
-                        ? "border-primary bg-primary/5"
+                        ? "ring-1 ring-primary bg-primary/[0.04]"
                         : encontrosDoDia.length > 0
-                          ? "border-primary/30 bg-primary/5"
-                          : "border-border/30"
+                          ? "bg-primary/[0.03]"
+                          : ""
                     }`}
                   >
-                    <span className={`text-xs font-medium ${isHoje ? "text-primary" : ""}`}>{dia}</span>
+                    <span className={`text-xs font-medium leading-none ${isHoje ? "text-primary" : ""}`}>{dia}</span>
                     {encontrosDoDia.length > 0 && (
                       <div className="mt-1 space-y-0.5">
                         {encontrosDoDia.slice(0, 2).map((e) => (
-                          <div key={e.id} className="text-[10px] leading-tight text-primary truncate">
+                          <div
+                            key={e.id}
+                            className="text-[10px] leading-tight text-primary truncate rounded-sm bg-primary/10 px-1 py-0.5"
+                          >
                             {e.tema}
                           </div>
                         ))}

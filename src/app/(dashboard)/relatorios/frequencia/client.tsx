@@ -168,32 +168,34 @@ function IndividualView({ catequistas }: { catequistas: { id: string; nome: stri
               </div>
             </div>
 
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Data</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Encontro</th>
-                  <th className="text-center py-3 px-2 font-medium text-muted-foreground">Presença</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground hidden md:table-cell">Justificativa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.presencas.map((p) => (
-                  <tr key={p.encontroId} className="border-b border-border/20 hover:bg-muted/30">
-                    <td className="py-3 px-2">{formatDate(p.encontroData)}</td>
-                    <td className="py-3 px-2">{p.encontroTema}</td>
-                    <td className="py-3 px-2 text-center">
-                      {p.presente ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary inline" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500 inline" />
-                      )}
-                    </td>
-                    <td className="py-3 px-2 text-muted-foreground hidden md:table-cell">{p.justificativa || "—"}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Data</th>
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Encontro</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Presença</th>
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap hidden md:table-cell">Justificativa</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {resultado.presencas.map((p) => (
+                    <tr key={p.encontroId} className="border-b border-border/20 hover:bg-muted/30">
+                      <td className="py-3 px-3 whitespace-nowrap">{formatDate(p.encontroData)}</td>
+                      <td className="py-3 px-3">{p.encontroTema}</td>
+                      <td className="py-3 px-3 text-center">
+                        {p.presente ? (
+                          <CheckCircle2 className="h-4 w-4 text-primary inline" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500 inline" />
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-muted-foreground hidden md:table-cell max-w-[200px] truncate">{p.justificativa || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
         )}
       </CardContent>
@@ -259,32 +261,44 @@ function TurmaView({ turmas }: { turmas: { id: string; nome: string }[] }) {
         {resultado && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <p className="text-sm text-muted-foreground mb-4">{resultado.encontros.length} encontros no período</p>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Catequista</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground hidden md:table-cell">Turmas</th>
-                  <th className="text-center py-3 px-2 font-medium text-muted-foreground hidden sm:table-cell">Presenças</th>
-                  <th className="text-center py-3 px-2 font-medium text-muted-foreground">Frequência</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.catequistas.map((c, i) => (
-                  <motion.tr
-                    key={c.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.02 }}
-                    className="border-b border-border/20 hover:bg-muted/30"
-                  >
-                    <td className="py-3 px-2 font-medium">{c.nome}</td>
-                    <td className="py-3 px-2 text-muted-foreground hidden md:table-cell">{c.turmas}</td>
-                    <td className="py-3 px-2 text-center hidden sm:table-cell">{c.presencas}/{c.totalEncontros}</td>
-                    <td className="py-3 px-2"><PercentBar value={c.percentual} /></td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+            {resultado.catequistas.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Nenhum catequista encontrado para esta turma.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Catequista</th>
+                      <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Presenças</th>
+                      <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Frequência</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultado.catequistas.map((c, i) => (
+                      <motion.tr
+                        key={c.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.02 }}
+                        className="border-b border-border/20 hover:bg-muted/30"
+                      >
+                        <td className="py-3 px-3 font-medium">{c.nome}</td>
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1">
+                            <span className="text-primary font-medium">{c.presencas}</span>
+                            <span className="text-muted-foreground">/</span>
+                            <span>{c.totalEncontros}</span>
+                          </span>
+                        </td>
+                        <td className="py-3 px-3"><PercentBar value={c.percentual} /></td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         )}
       </CardContent>
@@ -344,32 +358,38 @@ function BaixaView() {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground mb-4">{resultado.catequistas.length} catequistas abaixo de {limite}%</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Catequista</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground hidden md:table-cell">Turmas</th>
-                      <th className="text-center py-3 px-2 font-medium text-muted-foreground hidden sm:table-cell">Presenças</th>
-                      <th className="text-center py-3 px-2 font-medium text-muted-foreground">Frequência</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {resultado.catequistas.map((c, i) => (
-                      <motion.tr
-                        key={c.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.03 }}
-                        className="border-b border-border/20 hover:bg-muted/30"
-                      >
-                        <td className="py-3 px-2 font-medium">{c.nome}</td>
-                        <td className="py-3 px-2 text-muted-foreground hidden md:table-cell">{c.turmas}</td>
-                        <td className="py-3 px-2 text-center hidden sm:table-cell">{c.presencas}/{c.totalEncontros}</td>
-                        <td className="py-3 px-2"><PercentBar value={c.percentual} /></td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Catequista</th>
+                        <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Presenças</th>
+                        <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Frequência</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resultado.catequistas.map((c, i) => (
+                        <motion.tr
+                          key={c.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: i * 0.03 }}
+                          className="border-b border-border/20 hover:bg-muted/30"
+                        >
+                          <td className="py-3 px-3 font-medium">{c.nome}</td>
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1">
+                              <span className="text-primary font-medium">{c.presencas}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span>{c.totalEncontros}</span>
+                            </span>
+                          </td>
+                          <td className="py-3 px-3"><PercentBar value={c.percentual} /></td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )}
           </motion.div>
