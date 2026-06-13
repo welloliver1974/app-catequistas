@@ -26,6 +26,31 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR")
 }
 
+function getInitials(name: string) {
+  const parts = name.trim().split(" ")
+  if (parts.length === 1) return parts[0].substring(0, 2)
+  return (parts[0][0] + parts[parts.length - 1][0])
+}
+
+function getAvatarBgColor(name: string) {
+  const colors = [
+    "from-pink-500 to-rose-500",
+    "from-purple-500 to-indigo-500",
+    "from-blue-500 to-sky-500",
+    "from-emerald-500 to-teal-500",
+    "from-amber-500 to-orange-500",
+    "from-violet-500 to-fuchsia-500",
+    "from-cyan-500 to-blue-500",
+    "from-lime-500 to-green-500"
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
 export function CatequistasClient({ catequistas }: { catequistas: Catequista[] }) {
   const [aberto, setAberto] = useState(false)
   const [editando, setEditando] = useState<Catequista | null>(null)
@@ -106,8 +131,15 @@ export function CatequistasClient({ catequistas }: { catequistas: Catequista[] }
                         className="border-b border-border/20 hover:bg-muted/30 transition-colors"
                       >
                         <td className="py-3 px-2">
-                          <p className="font-medium">{c.nome}</p>
-                          <p className="text-xs text-muted-foreground md:hidden">{c.email}</p>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase select-none shrink-0 bg-gradient-to-br ${getAvatarBgColor(c.nome)}`}>
+                              {getInitials(c.nome)}
+                            </div>
+                            <div>
+                              <p className="font-medium">{c.nome}</p>
+                              <p className="text-xs text-muted-foreground md:hidden">{c.email}</p>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-2 text-muted-foreground hidden md:table-cell">
                           <div className="flex flex-col gap-0.5">
@@ -118,12 +150,12 @@ export function CatequistasClient({ catequistas }: { catequistas: Catequista[] }
                         <td className="py-3 px-2 text-muted-foreground hidden lg:table-cell">{c.turmas || "—"}</td>
                         <td className="py-3 px-2 text-center">
                           {c.status === "ATIVO" ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-primary">
-                              <CheckCircle2 className="h-3 w-3" /> Ativo
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 select-none shadow-sm">
+                              Ativo
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                              <XCircle className="h-3 w-3" /> Inativo
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border select-none shadow-sm">
+                              Inativo
                             </span>
                           )}
                         </td>

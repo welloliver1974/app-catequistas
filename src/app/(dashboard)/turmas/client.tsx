@@ -17,6 +17,31 @@ interface Turma {
   totalEncontros: number
 }
 
+function getInitials(name: string) {
+  const parts = name.trim().split(" ")
+  if (parts.length === 1) return parts[0].substring(0, 2)
+  return (parts[0][0] + parts[parts.length - 1][0])
+}
+
+function getAvatarBgColor(name: string) {
+  const colors = [
+    "from-pink-500 to-rose-500",
+    "from-purple-500 to-indigo-500",
+    "from-blue-500 to-sky-500",
+    "from-emerald-500 to-teal-500",
+    "from-amber-500 to-orange-500",
+    "from-violet-500 to-fuchsia-500",
+    "from-cyan-500 to-blue-500",
+    "from-lime-500 to-green-500"
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
 export function TurmasClient({ turmas }: { turmas: Turma[] }) {
   const [aberto, setAberto] = useState(false)
   const [editando, setEditando] = useState<Turma | null>(null)
@@ -95,7 +120,14 @@ export function TurmasClient({ turmas }: { turmas: Turma[] }) {
                         transition={{ delay: i * 0.03 }}
                         className="border-b border-border/20 hover:bg-muted/30 transition-colors"
                       >
-                        <td className="py-3 px-2 font-medium">{t.nome}</td>
+                        <td className="py-3 px-2 font-medium">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase select-none shrink-0 bg-gradient-to-br ${getAvatarBgColor(t.nome)}`}>
+                              {getInitials(t.nome)}
+                            </div>
+                            <span>{t.nome}</span>
+                          </div>
+                        </td>
                         <td className="py-3 px-2 text-muted-foreground hidden md:table-cell">{t.descricao || "—"}</td>
                         <td className="py-3 px-2 text-center hidden sm:table-cell">{t.totalCatequistas}</td>
                         <td className="py-3 px-2 text-center hidden sm:table-cell">{t.totalEncontros}</td>
