@@ -66,6 +66,16 @@
 - CSV de catequistas, encontros, presenças e frequência
 - Impressão como PDF (navegador)
 - Backup completo do banco SQLite (`/api/backup` + botão em Configurações)
+- Backup automático diário (cron 03:00, 30 dias de retenção)
+- Restore com 1 clique pela interface
+- Snapshot automático antes de importar planilha
+
+### Inteligência Artificial
+- Suporte a Groq (grátis) e OpenRouter
+- **Resumo do Tema**: coordenador descreve o encontro, IA estrutura em assunto, pontos, reflexão, avisos
+- **Sumário automático**: IA gera resumo executivo com dados de presença, ausências e justificativas
+- **Assistente**: chat em `/assistente` que responde perguntas sobre os dados em linguagem natural
+- Configuração de provedor, chave e modelo em Configurações
 
 ### Importação
 - Importação via Google Sheets API (3 abas: ListaCatequistas, Temas, Presencas)
