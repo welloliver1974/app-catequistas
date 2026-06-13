@@ -50,3 +50,23 @@ export async function excluirCatequista(id: string) {
   await prisma.catequista.delete({ where: { id } })
   revalidatePath("/catequistas")
 }
+
+export async function salvarTelefones(dados: { id: string; telefone: string }[]) {
+  let ok = 0
+  let err = 0
+  for (const { id, telefone } of dados) {
+    try {
+      const digits = telefone.replace(/\D/g, "")
+      await prisma.catequista.update({
+        where: { id },
+        data: { telefone: digits || null },
+      })
+      ok++
+    } catch {
+      err++
+    }
+  }
+  revalidatePath("/catequistas")
+  revalidatePath("/catequistas/telefones")
+  return { ok, err }
+}
