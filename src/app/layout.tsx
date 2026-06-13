@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://catequistas.housecloud.tec.br"),
   title: "App Catequistas",
   description: "Sistema de cadastro e controle de presença de catequistas",
   manifest: "/manifest.json",
@@ -26,6 +27,21 @@ export const metadata: Metadata = {
     { rel: "icon", url: "/icons/icon-192.svg" },
     { rel: "apple-touch-icon", url: "/icons/icon-192.svg" },
   ],
+  openGraph: {
+    title: "App Catequistas",
+    description: "Sistema de cadastro e controle de presença de catequistas",
+    url: "https://catequistas.housecloud.tec.br",
+    siteName: "App Catequistas",
+    locale: "pt_BR",
+    type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "App Catequistas",
+    description: "Sistema de cadastro e controle de presença de catequistas",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function RootLayout({
