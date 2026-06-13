@@ -19,7 +19,7 @@ const navItems = [
   { icon: BookOpen, label: "Turmas", href: "/turmas" },
   { icon: FileText, label: "Frequência", href: "/relatorios/frequencia" },
   { icon: Download, label: "Exportar", href: "/relatorios/exportar" },
-  { icon: ClipboardCheck, label: "Presença", href: "/presenca" },
+  { icon: ClipboardCheck, label: "Painel Admin", href: "/presenca" },
   { icon: CalendarDays, label: "Calendário", href: "/calendario" },
   { icon: Database, label: "Importar", href: "/importar" },
   { icon: Bell, label: "Notificações", href: "/notificacoes" },

@@ -49,7 +49,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
   return (
     <>
       <header className="h-16 border-b border-border/40 flex items-center px-6">
-        <h1 className="text-lg font-semibold">Presença</h1>
+        <h1 className="text-lg font-semibold">Painel Admin</h1>
       </header>
 
       <div className="p-6 space-y-6">
