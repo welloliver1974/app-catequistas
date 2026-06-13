@@ -99,177 +99,181 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
         <h1 className="text-lg font-semibold">Configurações</h1>
       </header>
 
-      <div className="p-4 sm:p-6 max-w-xl mx-auto space-y-6">
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Mail className="h-4 w-4" /> Alterar E-mail
-            </CardTitle>
-            <CardDescription>Altere o e-mail de login do administrador.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleEmail} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Novo e-mail</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <Button type="submit" disabled={savingEmail}>
-                {savingEmail ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</> : <><Save className="h-4 w-4" /> Salvar E-mail</>}
-              </Button>
-              {msgEmail && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`text-sm flex items-center gap-1 ${msgEmail.type === "success" ? "text-primary" : "text-destructive"}`}
-                >
-                  {msgEmail.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                  {msgEmail.text}
-                </motion.p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Lock className="h-4 w-4" /> Alterar Senha
-            </CardTitle>
-            <CardDescription>Altere a senha de acesso ao sistema.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="novaSenha">Nova senha</Label>
-                <Input id="novaSenha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required minLength={4} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmSenha">Confirmar senha</Label>
-                <Input id="confirmSenha" type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} required minLength={4} />
-              </div>
-              <Button type="submit" disabled={savingPass}>
-                {savingPass ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</> : <><Save className="h-4 w-4" /> Salvar Senha</>}
-              </Button>
-              {msgPass && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`text-sm flex items-center gap-1 ${msgPass.type === "success" ? "text-primary" : "text-destructive"}`}
-                >
-                  {msgPass.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                  {msgPass.text}
-                </motion.p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4" /> Inteligência Artificial
-            </CardTitle>
-            <CardDescription>Configure a IA para gerar resumos de encontros e responder perguntas.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault()
-                setSavingAi(true)
-                setMsgAi(null)
-                const formData = new FormData()
-                formData.set("provider", aiProvider)
-                formData.set("apiKey", aiApiKey)
-                formData.set("model", aiModel)
-                await salvarConfigAi(formData)
-                setMsgAi({ type: "success", text: "Configuração salva!" })
-                setSavingAi(false)
-              }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label>Provedor</Label>
-                <select
-                  value={aiProvider}
-                  onChange={(e) => setAiProvider(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="groq">Groq (grátis)</option>
-                  <option value="openrouter">OpenRouter</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Chave da API</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type={showKey ? "text" : "password"}
-                    value={aiApiKey}
-                    onChange={(e) => setAiApiKey(e.target.value)}
-                    placeholder={aiProvider === "groq" ? "gsk_..." : "sk-or-..."}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowKey(!showKey)}
-                    className="p-2 rounded hover:bg-muted transition-colors"
-                  >
-                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div className="space-y-6">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mail className="h-4 w-4" /> Alterar E-mail
+              </CardTitle>
+              <CardDescription>Altere o e-mail de login do administrador.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmail} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Novo e-mail</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-              </div>
+                <Button type="submit" disabled={savingEmail}>
+                  {savingEmail ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</> : <><Save className="h-4 w-4" /> Salvar E-mail</>}
+                </Button>
+                {msgEmail && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`text-sm flex items-center gap-1 ${msgEmail.type === "success" ? "text-primary" : "text-destructive"}`}
+                  >
+                    {msgEmail.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {msgEmail.text}
+                  </motion.p>
+                )}
+              </form>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label>Modelo</Label>
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {MODELOS_SUGERIDOS
-                    .filter((m) => m.provider === aiProvider)
-                    .map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                </select>
-              </div>
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Lock className="h-4 w-4" /> Alterar Senha
+              </CardTitle>
+              <CardDescription>Altere a senha de acesso ao sistema.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="novaSenha">Nova senha</Label>
+                  <Input id="novaSenha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required minLength={4} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmSenha">Confirmar senha</Label>
+                  <Input id="confirmSenha" type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} required minLength={4} />
+                </div>
+                <Button type="submit" disabled={savingPass}>
+                  {savingPass ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</> : <><Save className="h-4 w-4" /> Salvar Senha</>}
+                </Button>
+                {msgPass && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`text-sm flex items-center gap-1 ${msgPass.type === "success" ? "text-primary" : "text-destructive"}`}
+                  >
+                    {msgPass.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {msgPass.text}
+                  </motion.p>
+                )}
+              </form>
+            </CardContent>
+          </Card>
 
-              <Button type="submit" disabled={savingAi} size="sm" className="gap-2">
-                {savingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {savingAi ? "Salvando..." : "Salvar Configuração"}
-              </Button>
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Download className="h-4 w-4" /> Backup do Banco
+              </CardTitle>
+              <CardDescription>Baixe uma cópia completa do banco de dados.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/api/backup" download>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" /> Baixar Backup (.db)
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+        </div>
 
-              {msgAi && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`text-sm flex items-center gap-1 ${msgAi.type === "success" ? "text-primary" : "text-destructive"}`}
-                >
-                  {msgAi.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                  {msgAi.text}
-                </motion.p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4" /> Inteligência Artificial
+              </CardTitle>
+              <CardDescription>Configure a IA para gerar resumos de encontros e responder perguntas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  setSavingAi(true)
+                  setMsgAi(null)
+                  const formData = new FormData()
+                  formData.set("provider", aiProvider)
+                  formData.set("apiKey", aiApiKey)
+                  formData.set("model", aiModel)
+                  await salvarConfigAi(formData)
+                  setMsgAi({ type: "success", text: "Configuração salva!" })
+                  setSavingAi(false)
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label>Provedor</Label>
+                  <select
+                    value={aiProvider}
+                    onChange={(e) => setAiProvider(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="groq">Groq (grátis)</option>
+                    <option value="openrouter">OpenRouter</option>
+                  </select>
+                </div>
 
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Download className="h-4 w-4" /> Backup do Banco
-            </CardTitle>
-            <CardDescription>Baixe uma cópia completa do banco de dados.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <a href="/api/backup" download>
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" /> Baixar Backup (.db)
-              </Button>
-            </a>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label>Chave da API</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type={showKey ? "text" : "password"}
+                      value={aiApiKey}
+                      onChange={(e) => setAiApiKey(e.target.value)}
+                      placeholder={aiProvider === "groq" ? "gsk_..." : "sk-or-..."}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="p-2 rounded hover:bg-muted transition-colors"
+                    >
+                      {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
 
-        <BackupCard />
+                <div className="space-y-2">
+                  <Label>Modelo</Label>
+                  <select
+                    value={aiModel}
+                    onChange={(e) => setAiModel(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {MODELOS_SUGERIDOS
+                      .filter((m) => m.provider === aiProvider)
+                      .map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <Button type="submit" disabled={savingAi} size="sm" className="gap-2">
+                  {savingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {savingAi ? "Salvando..." : "Salvar Configuração"}
+                </Button>
+
+                {msgAi && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`text-sm flex items-center gap-1 ${msgAi.type === "success" ? "text-primary" : "text-destructive"}`}
+                  >
+                    {msgAi.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {msgAi.text}
+                  </motion.p>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
+          <BackupCard />
+        </div>
       </div>
     </>
   )
