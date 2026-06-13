@@ -39,11 +39,11 @@ export function NotificacoesClient({ webhookSalvo }: Props) {
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Notificações</h1>
       </header>
 
-      <div className="p-6 max-w-2xl space-y-6">
+      <div className="p-4 sm:p-6 max-w-2xl space-y-6">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-base">Discord Webhook</CardTitle>
@@ -92,12 +92,12 @@ export function NotificacoesClient({ webhookSalvo }: Props) {
               />
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={handleEnviar} disabled={loading || !webhookUrl || !mensagem}>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={handleEnviar} disabled={loading || !webhookUrl || !mensagem} className="w-full sm:w-auto">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 Enviar Mensagem
               </Button>
-              <Button variant="outline" onClick={handleNotificarProximo} disabled={loading || !webhookUrl}>
+              <Button variant="outline" onClick={handleNotificarProximo} disabled={loading || !webhookUrl} className="w-full sm:w-auto">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
                 Notificar Próximo Encontro
               </Button>

@@ -48,17 +48,17 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Painel Admin</h1>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {proximoEncontro ? (
           <>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-4">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="space-y-3 flex-1">
                       <div className="flex items-center gap-2">
                         <Church className="h-5 w-5 text-primary" />
@@ -90,7 +90,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                         </a>
                       </div>
                     </div>
-                    <Button onClick={abrirWhatsApp} className="shrink-0 gap-2" size="lg">
+                    <Button onClick={abrirWhatsApp} className="w-full md:w-auto md:shrink-0 gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
                       <MessageCircle className="h-5 w-5" />
                       Compartilhar no WhatsApp
                     </Button>
@@ -99,7 +99,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
               </Card>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { label: "Catequistas", value: stats.total, color: "text-foreground" },
                 { label: "Confirmados", value: stats.confirmados, color: "text-primary" },
@@ -120,7 +120,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
             </div>
 
             <Card className="border-border/50">
-              <CardHeader>
+              <CardHeader className="px-4 sm:px-6">
                 <CardTitle className="text-base">Respostas dos Catequistas</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -136,12 +136,12 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.02 }}
-                        className="flex items-center justify-between px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
+                        className="flex items-center justify-between px-4 sm:px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <span className="font-medium">{c.nome}</span>
                           {c.justificativa && (
-                            <span className="text-xs text-muted-foreground italic max-w-xs truncate">
+                            <span className="text-xs text-muted-foreground italic max-w-[120px] xs:max-w-xs truncate">
                               &quot;{c.justificativa}&quot;
                             </span>
                           )}

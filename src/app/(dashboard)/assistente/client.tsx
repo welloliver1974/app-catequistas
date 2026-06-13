@@ -50,13 +50,13 @@ export function AssistenteClient() {
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" /> Assistente IA
         </h1>
       </header>
 
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-3xl mx-auto">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-base">Faça perguntas sobre os dados</CardTitle>

@@ -95,11 +95,11 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Configurações</h1>
       </header>
 
-      <div className="p-6 max-w-xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 max-w-xl mx-auto space-y-6">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">

@@ -65,11 +65,11 @@ export function ExportarClient({ turmas }: { turmas: { id: string; nome: string 
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Exportar Dados</h1>
       </header>
 
-      <div className="p-6 max-w-2xl">
+      <div className="p-4 sm:p-6 max-w-2xl">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-base">Exportar CSV</CardTitle>

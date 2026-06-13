@@ -64,10 +64,10 @@ function PulseDot() {
 export function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center justify-between px-6">
+      <header className="h-16 border-b border-border/40 flex items-center justify-between px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Dashboard</h1>
       </header>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
           initial="hidden"

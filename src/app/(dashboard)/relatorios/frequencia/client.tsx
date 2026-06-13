@@ -39,15 +39,15 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center px-6">
-        <h1 className="text-lg font-semibold">Relatórios de Frequência <span className="text-[10px] text-muted-foreground font-normal">v2</span></h1>
+      <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
+        <h1 className="text-lg font-semibold">Relatórios de Frequência <span className="text-[10px] text-muted-foreground font-normal font-sans">v2</span></h1>
       </header>
 
-      <div className="p-6">
-        <div className="flex gap-2 mb-6">
+      <div className="p-4 sm:p-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setTab("individual")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
               tab === "individual"
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
@@ -58,7 +58,7 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
           </button>
           <button
             onClick={() => setTab("turma")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
               tab === "turma"
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
@@ -69,7 +69,7 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
           </button>
           <button
             onClick={() => setTab("baixa")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
               tab === "baixa"
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"

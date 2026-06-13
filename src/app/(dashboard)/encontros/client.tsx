@@ -63,23 +63,24 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
 
   return (
     <>
-      <header className="h-16 border-b border-border/40 flex items-center justify-between px-6">
+      <header className="h-16 border-b border-border/40 flex items-center justify-between px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Encontros</h1>
-        <Button onClick={abrirCriar}>
+        <Button onClick={abrirCriar} className="h-8 text-xs sm:h-9 sm:text-sm gap-1">
           <Plus className="h-4 w-4" />
-          Novo Encontro
+          <span className="hidden sm:inline">Novo Encontro</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </header>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Card className="border-border/50">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-base">Todos os Encontros</CardTitle>
             <Input
               placeholder="Buscar por tema..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-60 h-8 text-sm"
+              className="w-full sm:max-w-60 h-8 text-sm"
             />
           </CardHeader>
           <CardContent>
