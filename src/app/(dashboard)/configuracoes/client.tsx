@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { changeEmail, resetPassword } from "@/actions/auth"
-import { salvarConfigAi, getConfigAi } from "@/actions/ai"
-import { MODELOS_SUGERIDOS } from "@/lib/ai"
+import { salvarConfigAi } from "@/actions/ai"
+import { MODELOS_SUGERIDOS } from "@/lib/modelos-ai"
 
 interface Backup {
   name: string
