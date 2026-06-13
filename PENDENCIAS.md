@@ -32,6 +32,9 @@
 - [x] Calendar/Popover/DatePicker custom (sem date-fns)
 - [x] Color-scheme fix (inline no body)
 - [x] Service worker v3 com reg.update() forçado
+- [x] Vincular catequistas à turma ao criar/importar (catequistas.ts, importar.ts)
+- [x] Systemd service com auto-restart no boot
+- [x] ExecStartPre que mata processo na porta 3003 antes de iniciar
 
 ## 🔲 Pendente
 
@@ -39,8 +42,8 @@
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
-| **Systemd service** para auto-start no boot | ~15 min | Pendente |
-| **Limpeza de processos zumbis** (root/opc next-server) | ~15 min | Pendente |
+| **Systemd service** para auto-start no boot | ~15 min | ✅ |
+| **Limpeza de processos zumbis** (root/opc next-server) | ~15 min | ✅ — zumbis root/opc são de containers Docker, só param com `docker stop` |
 
 ---
 

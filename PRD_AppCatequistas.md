@@ -99,10 +99,10 @@
 ### Servidor
 - **VPS:** Oracle Cloud (137.131.187.156), Ubuntu
 - **App:** Next.js rodando em `0.0.0.0:3003`
-- **Gerenciamento:** `nohup node_modules/.bin/next start` (sem PM2; systemd pendente)
+- **Gerenciamento:** Systemd service (`catequistas.service`), auto-start no boot, restart automático se cair
 - **Firewall:** iptables + UFW liberados para porta 3003
 - **Acesso SSH:** `ubuntu@137.131.187.156`, key em `~/.ssh/vps_key`
-- **Processos zumbis:** processos `next-server` antigos (root/opc) persistem via containerd-shim; matar e iniciar rapidamente resolve
+- **Processos zumbis:** processos `next-server` antigos (root/opc) são de containers Docker gerenciados por containerd-shim — não afetam o app
 
 ### Cloudflare Tunnel
 - **Domínio:** `catequistas.housecloud.tec.br`
@@ -216,7 +216,7 @@ npm run dev               # http://localhost:3000
 ### Produção
 ```bash
 npm run build
-npx next start -p 3003 -H 0.0.0.0     # http://localhost:3003
+sudo systemctl restart catequistas      # Gerencia via systemd (auto-start + restart)
 ```
 
 **Admin:** `welloliver@gmail.com` (senha definida pelo usuário)
