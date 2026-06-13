@@ -1,5 +1,7 @@
 "use server"
 
+import { copyFile } from "node:fs/promises"
+import { join } from "node:path"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
@@ -51,6 +53,12 @@ export async function importarGoogleSheet(formData: FormData) {
   let presencasCriadas = 0
 
   try {
+    const backupDir = join(process.cwd(), "backups", "pre-import")
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+    await import("node:fs").then((fs) => fs.promises.mkdir(backupDir, { recursive: true }))
+    await copyFile(join(process.cwd(), "dev.db"), join(backupDir, `pre-import-${timestamp}.db`)).catch(() => {})
+    resultados.push(`Snapshot salvo antes da importação`)
+
     if (importarCatequistas) {
       const rows = await fetchSheetData(spreadsheetId, "ListaCatequistas!A:A", apiKey)
       if (rows && rows.length > 0) {
