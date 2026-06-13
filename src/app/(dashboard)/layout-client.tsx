@@ -20,6 +20,7 @@ const navItems = [
   { icon: Users, label: "Catequistas", href: "/catequistas" },
   { icon: BookOpen, label: "Turmas", href: "/turmas" },
   { icon: FileText, label: "Frequência", href: "/relatorios/frequencia" },
+  { icon: FileText, label: "Relatório IA", href: "/relatorios/narrativo" },
   { icon: Download, label: "Exportar", href: "/relatorios/exportar" },
   { icon: ClipboardCheck, label: "Painel Admin", href: "/presenca" },
   { icon: CalendarDays, label: "Calendário", href: "/calendario" },

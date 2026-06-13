@@ -109,6 +109,144 @@ Responda de forma direta e objetiva, baseando-se APENAS nos dados fornecidos. Se
   return await sendToAi(prompt, config, 0.3)
 }
 
+
+export async function gerarQuiz(tema: string, resumo?: string): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const conteudo = resumo ? `Tema: "${tema}"\nResumo do encontro:\n${resumo}` : `Tema: "${tema}"`
+
+  const prompt = `Você é um catequista especialista. Crie um quiz com 5 perguntas de múltipla escolha sobre o encontro de catequese abaixo.
+
+${conteudo}
+
+Retorne APENAS um JSON válido com esta estrutura exata (sem markdown, sem texto fora do JSON):
+[
+  {
+    "pergunta": "texto da pergunta",
+    "opcoes": ["A) opção 1", "B) opção 2", "C) opção 3", "D) opção 4"],
+    "correta": 0
+  }
+]
+
+"correta" é o índice (0-3) da opção correta. Use linguagem simples e pastoral.`
+
+  const raw = await sendToAi(prompt, config, 0.5)
+  // Extrai JSON mesmo se vier com markdown
+  const match = raw.match(/\[[\s\S]*\]/)
+  if (!match) throw new Error("IA não retornou um quiz válido.")
+  return match[0]
+}
+
+export async function gerarMensagemPersonalizada(dados: {
+  nome: string
+  tema: string
+  dataEncontro: string
+  totalFaltas: number
+  totalEncontros: number
+}): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const prompt = `Você é um coordenador de catequese acolhedor e pastoral. Escreva uma mensagem de WhatsApp personalizada e acolhedora para ${dados.nome}, que não pôde estar presente no encontro de catequese.
+
+Dados:
+- Nome: ${dados.nome}
+- Tema do encontro: "${dados.tema}"
+- Data: ${dados.dataEncontro}
+- Total de faltas nos últimos encontros: ${dados.totalFaltas} de ${dados.totalEncontros}
+
+A mensagem deve:
+1. Ser calorosa e acolhedora (não cobrativa)
+2. Mencionar o tema do encontro e incentivar a buscar o conteúdo
+3. Se tiver muitas faltas (mais de 3), adicionar um convite especial para conversar
+4. Ter no máximo 5 linhas
+5. Terminar com uma saudação cristã
+
+Responda APENAS com o texto da mensagem, sem aspas externas.`
+
+  return await sendToAi(prompt, config, 0.8)
+}
+
+export async function gerarRelatorioMensal(dados: {
+  mes: string
+  ano: string
+  encontros: { tema: string; data: string; presentes: number; ausentes: number; total: number }[]
+  totalCatequistas: number
+  mediaFrequencia: number
+  catequistasBaixaFreq: { nome: string; percentual: number }[]
+}): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const encontrosStr = dados.encontros
+    .map((e) => `  - ${e.data}: "${e.tema}" — ${e.presentes} presentes de ${e.total} (${Math.round((e.presentes / Math.max(e.total, 1)) * 100)}%)`)
+    .join("\n")
+
+  const baixaFreqStr = dados.catequistasBaixaFreq.length > 0
+    ? dados.catequistasBaixaFreq.map((c) => `  - ${c.nome} (${c.percentual}%)`).join("\n")
+    : "  Nenhum catequista com baixa frequência."
+
+  const prompt = `Você é um secretário pastoral. Redija um relatório narrativo formal do mês de ${dados.mes}/${dados.ano} para a coordenação da catequese da paróquia.
+
+Dados do mês:
+- Total de catequistas ativos: ${dados.totalCatequistas}
+- Encontros realizados: ${dados.encontros.length}
+- Média geral de frequência: ${dados.mediaFrequencia}%
+- Encontros e presenças:
+${encontrosStr}
+- Catequistas com baixa frequência (<70%):
+${baixaFreqStr}
+
+Escreva um relatório formal com:
+1. Cabeçalho: "Relatório de Atividades — Catequese — ${dados.mes}/${dados.ano}"
+2. Parágrafo introdutório (2-3 frases)
+3. Seção "Encontros Realizados" (narrativa dos encontros)
+4. Seção "Frequência e Participação" (análise dos números)
+5. Seção "Atenção Pastoral" (catequistas com baixa frequência, se houver)
+6. Parágrafo de encerramento com perspectivas
+
+Use linguagem formal, pastoral e positiva. Responda APENAS com o relatório completo.`
+
+  return await sendToAi(prompt, config, 0.7, 2)
+}
+
+export async function analisarFaltas(dados: {
+  catequistas: { nome: string; faltas: number; total: number; percentualFalta: number; ultimasFaltas: string[] }[]
+  periodo: string
+}): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const top10 = dados.catequistas
+    .sort((a, b) => b.percentualFalta - a.percentualFalta)
+    .slice(0, 15)
+
+  const resumo = top10
+    .map((c) => `  - ${c.nome}: ${c.faltas} faltas de ${c.total} encontros (${c.percentualFalta}% de ausência). Últimas faltas: ${c.ultimasFaltas.join(", ") || "nenhuma registrada"}`)
+    .join("\n")
+
+  const prompt = `Você é um analista pastoral. Analise os padrões de faltas dos catequistas no período: ${dados.periodo}.
+
+Dados de ausências:
+${resumo}
+
+Forneça uma análise concisa em markdown com:
+
+## 🔍 Padrões Identificados
+(Liste 3-5 padrões que você observou nos dados, como períodos de maior ausência, catequistas com faltas consecutivas, etc.)
+
+## ⚠️ Atenção Prioritária
+(Liste os 3-5 catequistas que merecem atenção pastoral urgente, com breve justificativa)
+
+## 💡 Recomendações
+(3-4 ações concretas que o coordenador pode tomar para melhorar a frequência)
+
+Use linguagem pastoral e não punitiva. Responda APENAS com a análise em markdown.`
+
+  return await sendToAi(prompt, config, 0.5)
+}
+
 async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, maxRetries = 2): Promise<string> {
   const url = config.provider === "groq" ? GROQ_URL : OPENROUTER_URL
   const model = config.model

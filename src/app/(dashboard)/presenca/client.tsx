@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText } from "lucide-react"
+import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText, Sparkles, Loader2, Copy } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -37,6 +38,9 @@ function formatDate(iso: string) {
 
 export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats }: Props) {
   const siteUrl = "https://catequistas.housecloud.tec.br"
+  const [mensagemModal, setMensagemModal] = useState<{ nome: string; texto: string } | null>(null)
+  const [gerandoMsg, setGerandoMsg] = useState<string | null>(null) // catequistaId sendo gerado
+  const [copiado, setCopiado] = useState(false)
 
   const mensagemWhatsApp = proximoEncontro
     ? `📅 *Próximo Encontro de Catequese*\n\n*Tema:* ${proximoEncontro.tema}\n*Data:* ${formatDate(proximoEncontro.data)}\n*Local:* ${proximoEncontro.local || proximoEncontro.turma}\n\n✅ Confirme sua presença aqui:\n${siteUrl}/presenca/confirmar`
@@ -47,8 +51,56 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
     window.open(url, "_blank")
   }
 
+  async function handleGerarMensagem(catequistaId: string, nome: string) {
+    if (!proximoEncontro) return
+    setGerandoMsg(catequistaId)
+    const { gerarMensagemCatequista } = await import("@/actions/ai")
+    const res = await gerarMensagemCatequista(catequistaId, proximoEncontro.id)
+    if (res.mensagem) {
+      setMensagemModal({ nome, texto: res.mensagem })
+    }
+    setGerandoMsg(null)
+  }
+
+  function copiarMensagem(texto: string) {
+    navigator.clipboard.writeText(texto)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
   return (
     <>
+      {/* Modal de mensagem personalizada */}
+      {mensagemModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border/50 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-base">Mensagem para {mensagemModal.nome}</h3>
+              <button onClick={() => setMensagemModal(null)} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-wrap leading-relaxed">
+              {mensagemModal.texto}
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => copiarMensagem(mensagemModal.texto)}>
+                <Copy className="h-4 w-4" />
+                {copiado ? "Copiado!" : "Copiar"}
+              </Button>
+              <Button size="sm" className="gap-2" onClick={() => {
+                const url = `https://wa.me/?text=${encodeURIComponent(mensagemModal.texto)}`
+                window.open(url, "_blank")
+              }}>
+                <MessageCircle className="h-4 w-4" />
+                Enviar no WhatsApp
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
       <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Painel Admin</h1>
       </header>
@@ -167,6 +219,18 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                             <span className="flex items-center gap-1 text-muted-foreground text-xs font-medium">
                               <Clock className="h-3.5 w-3.5" /> Pendente
                             </span>
+                          )}
+                          {(c.presente === false || c.presente === null) && proximoEncontro && (
+                            <button
+                              title="Gerar mensagem IA"
+                              onClick={() => handleGerarMensagem(c.id, c.nome)}
+                              disabled={gerandoMsg === c.id}
+                              className="p-1 rounded hover:bg-primary/10 transition-colors text-primary"
+                            >
+                              {gerandoMsg === c.id
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <Sparkles className="h-3.5 w-3.5" />}
+                            </button>
                           )}
                         </div>
                       </motion.div>

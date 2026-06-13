@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, Pencil, Trash2, ExternalLink, Sparkles, FileText, Loader2, BrainCircuit, Volume2, VolumeX } from "lucide-react"
+import { Plus, Pencil, Trash2, ExternalLink, Sparkles, FileText, Loader2, BrainCircuit, Volume2, VolumeX, HelpCircle, CheckCircle2 as CheckIcon, XCircle as XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { criarEncontro, excluirEncontro } from "@/actions/encontros"
-import { gerarResumo, gerarSumario, gerarConteudoTema } from "@/actions/ai"
+import { gerarResumo, gerarSumario, gerarConteudoTema, gerarQuizEncontro } from "@/actions/ai"
 import { DatePicker } from "@/components/ui/date-picker"
 
 interface Encontro {
@@ -155,6 +155,9 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [falando, setFalando] = useState(false)
+  const [quiz, setQuiz] = useState<{ pergunta: string; opcoes: string[]; correta: number }[] | null>(null)
+  const [respostas, setRespostas] = useState<(number | null)[]>([])
+  const [gerandoQuiz, setGerandoQuiz] = useState(false)
 
   function ouvirResumo() {
     if (!("speechSynthesis" in window)) {
@@ -181,6 +184,25 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
   function pararResumo() {
     window.speechSynthesis.cancel()
     setFalando(false)
+  }
+
+  async function handleGerarQuiz() {
+    setGerandoQuiz(true)
+    setQuiz(null)
+    setRespostas([])
+    const res = await gerarQuizEncontro(encontro.id)
+    if (res.quiz) {
+      try {
+        const parsed = JSON.parse(res.quiz)
+        setQuiz(parsed)
+        setRespostas(new Array(parsed.length).fill(null))
+      } catch {
+        setMsg({ type: "error", text: "Erro ao processar o quiz." })
+      }
+    } else if (res.error) {
+      setMsg({ type: "error", text: res.error })
+    }
+    setGerandoQuiz(false)
   }
 
   async function handleGerarResumo() {
@@ -276,6 +298,69 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
               </div>
             </div>
           )}
+
+          {/* Quiz Section */}
+          <div className="border-t border-border/40 pt-4 space-y-3">
+            <Button
+              onClick={handleGerarQuiz}
+              disabled={gerandoQuiz}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              {gerandoQuiz ? <Loader2 className="h-4 w-4 animate-spin" /> : <HelpCircle className="h-4 w-4" />}
+              {gerandoQuiz ? "Gerando quiz..." : "Gerar Quiz do Encontro"}
+            </Button>
+            <p className="text-xs text-muted-foreground">IA gera 5 perguntas sobre o tema para testar o conhecimento.</p>
+
+            {quiz && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pt-2">
+                {quiz.map((q, qi) => (
+                  <div key={qi} className="space-y-2">
+                    <p className="text-sm font-medium">{qi + 1}. {q.pergunta}</p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {q.opcoes.map((op, oi) => {
+                        const respondido = respostas[qi] !== null
+                        const selecionado = respostas[qi] === oi
+                        const correto = oi === q.correta
+                        let cls = "text-left px-3 py-2 rounded-lg border text-xs transition-all "
+                        if (!respondido) cls += "border-border/40 hover:bg-muted/50 cursor-pointer"
+                        else if (selecionado && correto) cls += "border-primary bg-primary/10 text-primary font-medium"
+                        else if (selecionado && !correto) cls += "border-destructive bg-destructive/10 text-destructive"
+                        else if (correto) cls += "border-primary/40 bg-primary/5 text-primary"
+                        else cls += "border-border/20 opacity-50"
+                        return (
+                          <button
+                            key={oi}
+                            className={cls}
+                            onClick={() => {
+                              if (respondido) return
+                              const novas = [...respostas]
+                              novas[qi] = oi
+                              setRespostas(novas)
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              {respondido && correto && <CheckIcon className="h-3 w-3 shrink-0" />}
+                              {respondido && selecionado && !correto && <XIcon className="h-3 w-3 shrink-0" />}
+                              {op}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {respostas.every((r) => r !== null) && (
+                  <div className="p-3 rounded-lg bg-primary/10 text-center">
+                    <p className="text-sm font-medium text-primary">
+                      Resultado: {respostas.filter((r, i) => r === quiz[i].correta).length} de {quiz.length} corretas 🎉
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
 
           <div className="border-t border-border/40 pt-4">
             <Button onClick={handleGerarSumario} disabled={gerando} variant="outline" size="sm" className="gap-2">

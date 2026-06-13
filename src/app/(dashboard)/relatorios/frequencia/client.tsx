@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle, Sparkles, Loader2, Copy, Check, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { PresencaRow, CatequistaFreq } from "@/actions/relatorios"
 
-type Tab = "individual" | "turma" | "baixa"
+type Tab = "individual" | "turma" | "baixa" | "analise_ia"
 
 interface Props {
   catequistas: { id: string; nome: string }[]
@@ -78,11 +78,23 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
             <AlertTriangle className="h-4 w-4" />
             Baixa Frequência
           </button>
+          <button
+            onClick={() => setTab("analise_ia")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
+              tab === "analise_ia"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Sparkles className="h-4 w-4 text-amber-500 fill-amber-500/20" />
+            Análise IA
+          </button>
         </div>
 
         {tab === "individual" && <IndividualView catequistas={catequistas} />}
         {tab === "turma" && <TurmaView turmas={turmas} />}
         {tab === "baixa" && <BaixaView />}
+        {tab === "analise_ia" && <IaView />}
       </div>
     </>
   )
@@ -425,6 +437,131 @@ function BaixaView() {
             )}
           </motion.div>
         )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function IaView() {
+  const [loading, setLoading] = useState(false)
+  const [analise, setAnalise] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [copiado, setCopiado] = useState(false)
+
+  async function handleAnalisar() {
+    setLoading(true)
+    setErro(null)
+    setAnalise(null)
+    setCopiado(false)
+
+    try {
+      const { analisarFaltasRecorrentes } = await import("@/actions/ai")
+      const res = await analisarFaltasRecorrentes()
+      if (res.error) {
+        setErro(res.error)
+      } else if (res.analise) {
+        setAnalise(res.analise)
+      } else {
+        setErro("Não foi possível gerar a análise.")
+      }
+    } catch (err) {
+      setErro("Erro de rede ao conectar com a IA.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleCopiar() {
+    if (!analise) return
+    try {
+      await navigator.clipboard.writeText(analise)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch (err) {
+      console.error("Erro ao copiar texto: ", err)
+    }
+  }
+
+  return (
+    <Card className="border-border/50">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-amber-500 fill-amber-500/20" />
+          Análise de Faltas Recorrentes com IA
+        </CardTitle>
+        <CardDescription>
+          A IA analisará a frequência de todos os catequistas ativos nos últimos 3 meses para mapear padrões de ausência e recomendar ações pastorais.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Button onClick={handleAnalisar} disabled={loading} className="gap-2">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Analisando histórico de presenças...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 text-amber-400 fill-amber-400" />
+              Analisar Faltas
+            </>
+          )}
+        </Button>
+
+        <AnimatePresence mode="wait">
+          {erro && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-4 rounded-lg bg-red-500/5 border border-red-500/20 text-red-500 text-sm flex items-center gap-2"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{erro}</span>
+            </motion.div>
+          )}
+
+          {analise && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="space-y-4"
+            >
+              <div className="flex justify-between items-center bg-muted/10 p-3 rounded-lg border border-border/20">
+                <span className="text-xs text-muted-foreground font-medium">
+                  Análise gerada com sucesso
+                </span>
+                <Button variant="outline" size="sm" onClick={handleCopiar} className="gap-1.5 h-8 text-xs">
+                  {copiado ? (
+                    <>
+                      <Check className="h-3 w-3 text-primary" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      Copiar Análise
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground p-5 rounded-xl bg-muted/20 border border-border/30 select-text max-h-[500px] overflow-y-auto">
+                {analise}
+              </div>
+            </motion.div>
+          )}
+
+          {!analise && !loading && !erro && (
+            <div className="text-center py-8 px-4 border border-dashed border-border/50 rounded-xl bg-muted/5">
+              <Sparkles className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Clique no botão acima para iniciar a análise inteligente dos últimos 3 meses.
+              </p>
+            </div>
+          )}
+        </AnimatePresence>
       </CardContent>
     </Card>
   )

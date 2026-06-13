@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi } from "@/lib/ai"
+import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi } from "@/lib/ai"
 import { revalidatePath } from "next/cache"
 
 export async function salvarConfigAi(formData: FormData) {
@@ -153,5 +153,154 @@ ${turmas.map((t) => `  ${t.nome} - ${t._count.catequistas} catequistas, ${t._cou
     return { success: resposta }
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao processar pergunta." }
+  }
+}
+
+// ─── Quiz Automático ──────────────────────────────────────────────────────────
+export async function gerarQuizEncontro(encontroId: string) {
+  try {
+    const encontro = await prisma.encontro.findUnique({
+      where: { id: encontroId },
+      select: { tema: true, resumo: true },
+    })
+    if (!encontro) return { error: "Encontro não encontrado." }
+    const json = await gerarQuizAi(encontro.tema, encontro.resumo ?? undefined)
+    return { success: true, quiz: json }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao gerar quiz." }
+  }
+}
+
+// ─── Mensagem Personalizada WhatsApp ─────────────────────────────────────────
+export async function gerarMensagemCatequista(catequistaId: string, encontroId: string) {
+  try {
+    const [catequista, encontro] = await Promise.all([
+      prisma.catequista.findUnique({
+        where: { id: catequistaId },
+        select: { nome: true },
+      }),
+      prisma.encontro.findUnique({
+        where: { id: encontroId },
+        select: { tema: true, data: true },
+      }),
+    ])
+    if (!catequista || !encontro) return { error: "Dados não encontrados." }
+
+    const totalEncontros = await prisma.encontro.count()
+    const totalFaltas = await prisma.registroPresenca.count({
+      where: { catequistaId, presente: false },
+    })
+
+    const mensagem = await gerarMensagemPersonalizadaAi({
+      nome: catequista.nome,
+      tema: encontro.tema,
+      dataEncontro: encontro.data.toLocaleDateString("pt-BR"),
+      totalFaltas,
+      totalEncontros,
+    })
+    return { success: true, mensagem }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao gerar mensagem." }
+  }
+}
+
+// ─── Relatório Narrativo Mensal ───────────────────────────────────────────────
+export async function gerarRelatorioNarrativo(mes: number, ano: number) {
+  try {
+    const inicio = new Date(ano, mes - 1, 1)
+    const fim = new Date(ano, mes, 0, 23, 59, 59)
+
+    const encontros = await prisma.encontro.findMany({
+      where: { data: { gte: inicio, lte: fim } },
+      include: { presencas: true },
+      orderBy: { data: "asc" },
+    })
+
+    const totalCatequistas = await prisma.catequista.count({ where: { status: "ATIVO" } })
+
+    const encontrosData = encontros.map((e) => ({
+      tema: e.tema,
+      data: e.data.toLocaleDateString("pt-BR"),
+      presentes: e.presencas.filter((p) => p.presente).length,
+      ausentes: e.presencas.filter((p) => !p.presente).length,
+      total: totalCatequistas,
+    }))
+
+    const totalPresencas = encontrosData.reduce((s, e) => s + e.presentes, 0)
+    const possivel = encontrosData.length * totalCatequistas
+    const mediaFrequencia = possivel > 0 ? Math.round((totalPresencas / possivel) * 100) : 0
+
+    // Calcula frequência individual no mês
+    const catequistas = await prisma.catequista.findMany({
+      where: { status: "ATIVO" },
+      select: { nome: true, id: true },
+    })
+    const baixaFreq: { nome: string; percentual: number }[] = []
+    for (const c of catequistas) {
+      const presentes = await prisma.registroPresenca.count({
+        where: { catequistaId: c.id, presente: true, encontro: { data: { gte: inicio, lte: fim } } },
+      })
+      const perc = encontros.length > 0 ? Math.round((presentes / encontros.length) * 100) : 100
+      if (perc < 70) baixaFreq.push({ nome: c.nome, percentual: perc })
+    }
+
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
+    const relatorio = await gerarRelatorioMensalAi({
+      mes: meses[mes - 1],
+      ano: String(ano),
+      encontros: encontrosData,
+      totalCatequistas,
+      mediaFrequencia,
+      catequistasBaixaFreq: baixaFreq,
+    })
+    return { success: true, relatorio }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao gerar relatório." }
+  }
+}
+
+// ─── Análise de Faltas Recorrentes ───────────────────────────────────────────
+export async function analisarFaltasRecorrentes() {
+  try {
+    const tresMesesAtras = new Date()
+    tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3)
+
+    const catequistas = await prisma.catequista.findMany({
+      where: { status: "ATIVO" },
+      select: {
+        id: true,
+        nome: true,
+        presencas: {
+          where: { encontro: { data: { gte: tresMesesAtras } } },
+          include: { encontro: { select: { data: true, tema: true } } },
+          orderBy: { encontro: { data: "desc" } },
+        },
+      },
+    })
+
+    const totalEncontros = await prisma.encontro.count({
+      where: { data: { gte: tresMesesAtras } },
+    })
+
+    const dados = catequistas
+      .map((c) => {
+        const faltas = c.presencas.filter((p) => !p.presente)
+        const percentualFalta = totalEncontros > 0 ? Math.round((faltas.length / totalEncontros) * 100) : 0
+        return {
+          nome: c.nome,
+          faltas: faltas.length,
+          total: totalEncontros,
+          percentualFalta,
+          ultimasFaltas: faltas.slice(0, 3).map((p) => p.encontro.data.toLocaleDateString("pt-BR")),
+        }
+      })
+      .filter((c) => c.faltas > 0)
+
+    const now = new Date()
+    const periodo = `${tresMesesAtras.toLocaleDateString("pt-BR")} a ${now.toLocaleDateString("pt-BR")}`
+    const analise = await analisarFaltasAi({ catequistas: dados, periodo })
+    return { success: true, analise }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao analisar faltas." }
   }
 }
