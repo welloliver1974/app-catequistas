@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, Pencil, Trash2, ExternalLink, Sparkles, FileText, Loader2, BrainCircuit } from "lucide-react"
+import { Plus, Pencil, Trash2, ExternalLink, Sparkles, FileText, Loader2, BrainCircuit, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -154,6 +154,34 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
   const [inputTexto, setInputTexto] = useState("")
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [falando, setFalando] = useState(false)
+
+  function ouvirResumo() {
+    if (!("speechSynthesis" in window)) {
+      alert("Seu navegador não suporta síntese de voz.")
+      return
+    }
+    window.speechSynthesis.cancel()
+    const texto = resumo.trim()
+    if (!texto) return
+    const utterance = new SpeechSynthesisUtterance(texto)
+    utterance.lang = "pt-BR"
+    utterance.rate = 0.95
+    utterance.pitch = 1
+    // Tenta selecionar voz pt-BR se disponível
+    const vozes = window.speechSynthesis.getVoices()
+    const vozPtBR = vozes.find((v) => v.lang === "pt-BR") || vozes.find((v) => v.lang.startsWith("pt"))
+    if (vozPtBR) utterance.voice = vozPtBR
+    utterance.onstart = () => setFalando(true)
+    utterance.onend = () => setFalando(false)
+    utterance.onerror = () => setFalando(false)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  function pararResumo() {
+    window.speechSynthesis.cancel()
+    setFalando(false)
+  }
 
   async function handleGerarResumo() {
     if (!inputTexto.trim()) return
@@ -221,8 +249,29 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
 
           {resumo && (
             <div className="space-y-2">
-              <Label>Resumo</Label>
-              <div className="p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-wrap leading-relaxed">
+              <div className="flex items-center justify-between">
+                <Label>Resumo</Label>
+                {falando ? (
+                  <button
+                    onClick={pararResumo}
+                    className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
+                  >
+                    <VolumeX className="h-4 w-4" />
+                    Parar áudio
+                  </button>
+                ) : (
+                  <button
+                    onClick={ouvirResumo}
+                    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    Ouvir resumo
+                  </button>
+                )}
+              </div>
+              <div className={`p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-wrap leading-relaxed transition-all ${
+                falando ? "ring-1 ring-primary/40 bg-primary/5" : ""
+              }`}>
                 {resumo}
               </div>
             </div>
