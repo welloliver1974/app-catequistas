@@ -9,6 +9,8 @@ export async function criarCatequista(formData: FormData) {
   const telefone = formData.get("telefone") as string
   const observacoes = formData.get("observacoes") as string
 
+  const turma = await prisma.turma.findFirst()
+
   await prisma.catequista.create({
     data: {
       nome,
@@ -16,6 +18,7 @@ export async function criarCatequista(formData: FormData) {
       telefone: telefone || null,
       observacoes: observacoes || null,
       dataEntrada: new Date(),
+      turmas: turma ? { create: [{ turmaId: turma.id }] } : undefined,
     },
   })
 

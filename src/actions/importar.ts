@@ -54,6 +54,7 @@ export async function importarGoogleSheet(formData: FormData) {
     if (importarCatequistas) {
       const rows = await fetchSheetData(spreadsheetId, "ListaCatequistas!A:A", apiKey)
       if (rows && rows.length > 0) {
+        const turma = await prisma.turma.findFirst()
         for (const [nome] of rows) {
           if (!nome || nome.trim() === "Nomes" || nome.trim() === "") continue
           const nomeLimpo = nome.trim()
@@ -65,6 +66,7 @@ export async function importarGoogleSheet(formData: FormData) {
               data: {
                 nome: nomeLimpo,
                 email: nameToEmail(nomeLimpo),
+                turmas: turma ? { create: [{ turmaId: turma.id }] } : undefined,
               },
             })
             catequistasCriados++
@@ -142,6 +144,20 @@ export async function importarGoogleSheet(formData: FormData) {
           }
         }
         resultados.push(`${presencasCriadas} presenças importadas`)
+      }
+    }
+
+    const turma = await prisma.turma.findFirst()
+    if (turma) {
+      const orphans = await prisma.catequista.findMany({
+        where: { turmas: { none: {} } },
+      })
+      if (orphans.length > 0) {
+        await prisma.turmaCatequista.createMany({
+          data: orphans.map((c) => ({ catequistaId: c.id, turmaId: turma.id })),
+          skipDuplicates: true,
+        })
+        resultados.push(`${orphans.length} catequistas vinculados à turma`)
       }
     }
 
