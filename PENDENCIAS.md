@@ -42,8 +42,11 @@
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
-| **Systemd service** para auto-start no boot | ~15 min | ✅ |
-| **Limpeza de processos zumbis** (root/opc next-server) | ~15 min | ✅ — zumbis root/opc são de containers Docker, só param com `docker stop` |
+| **Resumo em áudio** (TTS) | ~30 min | Pendente |
+| **Quiz automático** (IA gera perguntas sobre o tema) | ~1h | Pendente |
+| **QR code p/ confirmação de presença** | ~1h | Pendente |
+| **Aviso inteligente no WhatsApp** (sugestão baseada no histórico) | ~1h | Pendente |
+| **Análise de temas recorrentes** (IA detecta padrões nos resumos) | ~1h | Pendente |
 
 ---
 
