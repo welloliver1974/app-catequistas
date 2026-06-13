@@ -40,6 +40,24 @@ Responda APENAS com o resumo estruturado em markdown.`
   return await sendToAi(prompt, config)
 }
 
+export async function gerarConteudoTema(tema: string): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const prompt = `Você é um catequista experiente. Gere um roteiro de estudo completo para o encontro de catequese com o tema "${tema}".
+
+Estruture em markdown com os seguintes tópicos:
+
+1. **Explicação do Tema** (2-3 parágrafos simples e diretos)
+2. **Passagens Bíblicas** (2-3 citações com referência)
+3. **Pontos para Reflexão** (3-5 bullets)
+4. **Perguntas para o Encontro** (3-4 perguntas para debate em grupo)
+
+Use linguagem acessível para catequistas. Responda APENAS com o conteúdo gerado.`
+
+  return await sendToAi(prompt, config, 0.8)
+}
+
 export async function gerarSumario(encontro: {
   tema: string
   data: string

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { criarEncontro, excluirEncontro } from "@/actions/encontros"
-import { gerarResumo, gerarSumario } from "@/actions/ai"
+import { gerarResumo, gerarSumario, gerarConteudoTema } from "@/actions/ai"
 import { DatePicker } from "@/components/ui/date-picker"
 
 interface Encontro {
@@ -164,6 +164,15 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
     setGerando(false)
   }
 
+  async function handleGerarConteudo() {
+    setGerando(true)
+    setMsg(null)
+    const res = await gerarConteudoTema(encontro.id, encontro.tema)
+    if (res.conteudo) setResumo(res.conteudo)
+    setMsg({ type: res.success ? "success" : "error", text: res.success || res.error || "" })
+    setGerando(false)
+  }
+
   async function handleGerarSumario() {
     setGerando(true)
     setMsg(null)
@@ -183,6 +192,16 @@ function EncontroDetalhe({ encontro, onClose }: { encontro: Encontro; onClose: (
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{encontro.tema}</h2>
             <span className="text-sm text-muted-foreground">{new Date(encontro.data).toLocaleDateString("pt-BR")}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleGerarConteudo} disabled={gerando} size="sm" className="gap-2">
+              {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {gerando ? "Gerando..." : "Gerar Conteúdo do Tema"}
+            </Button>
+            <p className="text-xs text-muted-foreground self-center">
+              Gera explicação, passagens bíblicas, reflexão e perguntas a partir do tema.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, perguntar as perguntarAi } from "@/lib/ai"
+import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi } from "@/lib/ai"
 import { revalidatePath } from "next/cache"
 
 export async function salvarConfigAi(formData: FormData) {
@@ -101,6 +101,20 @@ export async function gerarSumario(encontroId: string) {
     return { success: sumario }
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao gerar sumário." }
+  }
+}
+
+export async function gerarConteudoTema(encontroId: string, tema: string) {
+  try {
+    const conteudo = await gerarConteudoTemaAi(tema)
+    await prisma.encontro.update({
+      where: { id: encontroId },
+      data: { resumo: conteudo },
+    })
+    revalidatePath("/encontros")
+    return { success: "Conteúdo gerado com sucesso!", conteudo }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao gerar conteúdo." }
   }
 }
 
