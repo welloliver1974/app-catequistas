@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
 import { PresencaAdminClient } from "./client"
 import { redirect } from "next/navigation"
+import { inicioDoDiaBrasilia } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -16,9 +17,11 @@ export default async function PresencaPage() {
   })
   if (!user) redirect("/login")
 
-  // Tenta encontro futuro; se não houver, usa o mais recente (passado)
+  // Busca encontro a partir da meia-noite de hoje no horário de Brasília.
+  // Isso mantém o encontro do dia visível até 23h59 locais, mesmo quando
+  // em UTC já é o dia seguinte.
   let proximoEncontro = await prisma.encontro.findFirst({
-    where: { data: { gte: new Date() } },
+    where: { data: { gte: inicioDoDiaBrasilia() } },
     orderBy: { data: "asc" },
     include: { turma: { select: { nome: true } } },
   })

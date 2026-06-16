@@ -4,6 +4,19 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { salvarUploadPdf } from "./upload"
 
+/**
+ * Converte uma string "YYYY-MM-DD" (vinda de um <input type="date">) em um
+ * objeto Date sem deslocamento de fuso. Usar new Date("YYYY-MM-DD") diretamente
+ * interpreta como UTC meia-noite, que no horário de Brasília (UTC-3) vira o
+ * dia anterior — causando o bug de data salva com 1 dia a menos.
+ *
+ * Solução: forçar meio-dia UTC (T12:00:00Z) para que a data seja sempre
+ * a mesma independente do fuso do servidor.
+ */
+function parseDateInput(dateStr: string): Date {
+  return new Date(`${dateStr}T12:00:00Z`)
+}
+
 export async function criarEncontro(formData: FormData) {
   const data = formData.get("data") as string
   const tema = formData.get("tema") as string
@@ -14,7 +27,7 @@ export async function criarEncontro(formData: FormData) {
 
   await prisma.encontro.create({
     data: {
-      data: new Date(data),
+      data: parseDateInput(data),
       tema,
       local: local || null,
       linkPdf: pdfPath || linkPdf || null,
@@ -36,7 +49,7 @@ export async function atualizarEncontro(id: string, formData: FormData) {
   await prisma.encontro.update({
     where: { id },
     data: {
-      data: new Date(data),
+      data: parseDateInput(data),
       tema,
       local: local || null,
       linkPdf: pdfPath || linkPdf || null,
