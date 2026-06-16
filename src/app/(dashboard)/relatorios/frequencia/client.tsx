@@ -459,6 +459,7 @@ function EncontroView() {
   const [encontroId, setEncontroId] = useState("")
   const [loadingEncontros, setLoadingEncontros] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [copiadoLista, setCopiadoLista] = useState(false)
   const [resultado, setResultado] = useState<{
     encontro: { id: string; tema: string; data: string; turma: string }
     lista: PresencaEncontroRow[]
@@ -483,6 +484,31 @@ function EncontroView() {
     setResultado(res)
     setLoading(false)
   }
+
+  function copiarListaPresentes() {
+    if (!resultado) return
+    const apenasPresentes = resultado.lista.filter((c) => c.presente === true)
+    const dataFormatada = formatDate(resultado.encontro.data)
+    
+    let texto = `*Presença — ${resultado.encontro.tema}*\n`
+    texto += `Turma: ${resultado.encontro.turma}\n`
+    texto += `Data: ${dataFormatada}\n\n`
+    texto += `*Catequistas Presentes:*\n`
+    
+    if (apenasPresentes.length === 0) {
+      texto += `Nenhum registrado como presente.`
+    } else {
+      apenasPresentes.forEach((c) => {
+        texto += `✅ ${c.nome}\n`
+      })
+    }
+
+    navigator.clipboard.writeText(texto)
+    setCopiadoLista(true)
+    setTimeout(() => setCopiadoLista(false), 2000)
+  }
+
+  const apenasPresentes = resultado ? resultado.lista.filter((c) => c.presente === true) : []
 
   return (
     <Card className="border-border/50">
@@ -559,9 +585,34 @@ function EncontroView() {
             {/* Barra geral */}
             <PercentBar value={resultado.stats.percentual} />
 
+            {/* Cabeçalho da Lista e Botão Copiar */}
+            <div className="flex items-center justify-between pt-2">
+              <h3 className="font-semibold text-sm text-muted-foreground">Catequistas Presentes ({apenasPresentes.length})</h3>
+              {apenasPresentes.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-8 text-xs text-primary border-primary/20 hover:bg-primary/5"
+                  onClick={copiarListaPresentes}
+                >
+                  {copiadoLista ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      Copiar Presentes (WhatsApp)
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
             {/* Lista detalhada */}
-            {resultado.lista.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum catequista ativo nesta turma.</p>
+            {apenasPresentes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum catequista registrado como presente neste encontro.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -573,7 +624,7 @@ function EncontroView() {
                     </tr>
                   </thead>
                   <tbody>
-                    {resultado.lista.map((c, i) => (
+                    {apenasPresentes.map((c, i) => (
                       <motion.tr
                         key={c.catequistaId}
                         initial={{ opacity: 0, x: -10 }}
@@ -583,22 +634,12 @@ function EncontroView() {
                       >
                         <td className="py-3 px-3 font-medium">{c.nome}</td>
                         <td className="py-3 px-3 text-center">
-                          {c.presente === true ? (
-                            <span className="inline-flex items-center gap-1 text-primary text-xs font-medium">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Presente
-                            </span>
-                          ) : c.presente === false ? (
-                            <span className="inline-flex items-center gap-1 text-red-500 text-xs font-medium">
-                              <XCircle className="h-3.5 w-3.5" /> Ausente
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs font-medium">
-                              <Clock className="h-3.5 w-3.5" /> Pendente
-                            </span>
-                          )}
+                          <span className="inline-flex items-center gap-1 text-primary text-xs font-medium">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Presente
+                          </span>
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
-                          {c.justificativa || "—"}
+                          —
                         </td>
                       </motion.tr>
                     ))}
