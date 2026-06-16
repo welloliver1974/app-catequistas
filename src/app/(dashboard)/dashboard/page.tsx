@@ -4,6 +4,10 @@ import { DashboardClient } from "./client"
 export const dynamic = "force-dynamic"
 
 async function getDashboardData() {
+  const agora = new Date()
+  const hojeInicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0, 0)
+  const hojeFim = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59, 999)
+
   const [
     totalCatequistas,
     totalEncontros,
@@ -11,6 +15,7 @@ async function getDashboardData() {
     ultimasPresencas,
     proximosEncontros,
     encontrosRecentes,
+    presencasHojeCount,
   ] = await Promise.all([
     prisma.catequista.count({ where: { status: "ATIVO" } }),
     prisma.encontro.count(),
@@ -39,6 +44,15 @@ async function getDashboardData() {
         presencas: { select: { presente: true } },
       },
     }),
+    prisma.registroPresenca.count({
+      where: {
+        presente: true,
+        confirmadoEm: {
+          gte: hojeInicio,
+          lte: hojeFim,
+        },
+      },
+    }),
   ])
 
   const totalRegistros = await prisma.registroPresenca.count()
@@ -64,7 +78,7 @@ async function getDashboardData() {
     stats: {
       catequistas: totalCatequistas,
       encontros: totalEncontros,
-      presencasHoje: ultimasPresencas.length,
+      presencasHoje: presencasHojeCount,
       frequenciaMedia,
     },
     historicoFrequencia,
