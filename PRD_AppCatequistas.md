@@ -29,13 +29,14 @@
 - Busca por nome na tabela
 - Vínculo com turmas (leitura)
 - Vínculo com usuário do sistema
+- **Telefones** (`/catequistas/telefones`): página para cadastrar telefone em lote — lista todos sem telefone com input ao lado de cada nome
 
 ### Encontros
 - CRUD completo (data, tema, local)
-- Upload de PDF diretamente no sistema (`public/uploads/encontros/`)
+- Upload de PDF diretamente no sistema (`public/uploads/encontros/`) — limite de 10MB
 - Ou link do Google Drive
 - Busca por tema na tabela
-- DatePicker com calendário custom (sem date-fns)
+- Input de data nativo (`<input type="date">`) — consistente com os relatórios
 
 ### Turmas
 - CRUD completo (nome, descrição)
@@ -46,6 +47,7 @@
 - Justificativa de ausência com campo de texto
 - Prevenção de duplicidade
 - **Painel Admin** (`/presenca`): card do próximo encontro, botão WhatsApp para compartilhar link, estatísticas de confirmação, lista de catequistas com status
+- **Mensagem WhatsApp personalizada**: IA gera mensagem para cada catequista ausente/pendente com base no histórico; se tiver telefone cadastrado, abre direto na conversa (`wa.me/55NUMERO`)
 - **Página pública** (`/presenca/confirmar`): catequista seleciona nome, vê próximo encontro, confirma/justifica, baixa PDF do encontro
 - **Discord automático**: notifica quando alguém confirma presença ou justifica ausência
 
@@ -60,7 +62,9 @@
 - **Frequência Individual** (por catequista e período) — stats cards + tabela Data/Encontro/Presença/Justificativa
 - **Frequência por Turma** (ranking com barra percentual) — stats cards + tabela Catequista/Presenças/Frequência
 - **Baixa Frequência** (catequistas abaixo do limite) — stats cards + tabela Catequista/Presenças/Frequência
-- Todas as 3 abas com formatação visual idêntica
+- **Relatório Narrativo** (`/relatorios/narrativo`): IA gera relatório mensal formal em markdown
+- **Análise de Faltas** (aba Análise IA): IA detecta padrões de ausência e recomenda ações pastorais
+- Todas as abas com formatação visual idêntica
 
 ### Exportação
 - CSV de catequistas, encontros, presenças e frequência
@@ -75,7 +79,12 @@
 - **Resumo do Tema**: coordenador descreve o encontro, IA estrutura em assunto, pontos, reflexão, avisos
 - **Conteúdo do Tema**: só com o nome do encontro, IA gera explicação, passagens bíblicas, reflexão e perguntas
 - **Sumário automático**: IA gera resumo executivo com dados de presença, ausências e justificativas
+- **Quiz do Encontro**: IA gera 5 perguntas de múltipla escolha sobre o tema
+- **Mensagem Personalizada**: IA escreve mensagem de WhatsApp acolhedora para catequista ausente
+- **Relatório Narrativo Mensal**: IA redige relatório formal de atividades
+- **Análise de Faltas**: IA identifica padrões de ausência e recomenda ações
 - **Assistente**: chat em `/assistente` que responde perguntas sobre os dados em linguagem natural
+- **TTS**: síntese de voz do resumo do encontro (Web Speech API)
 - Configuração de provedor, chave e modelo em Configurações
 
 ### Importação
@@ -103,6 +112,11 @@
 - Ícones SVG
 - Instalável na tela inicial
 
+### Open Graph / Preview
+- Imagem OG gerada dinamicamente via `ImageResponse` (next/og) — gradiente escuro + ícone igreja + título
+- Metadados `og:image`, `og:title`, `og:description`, `twitter:card` configurados no layout raiz
+- `metadataBase` apontando para `https://catequistas.housecloud.tec.br`
+
 ---
 
 ## 2.1 Deploy & Infraestrutura
@@ -110,6 +124,7 @@
 ### Servidor
 - **VPS:** Oracle Cloud (137.131.187.156), Ubuntu
 - **App:** Next.js rodando em `0.0.0.0:3003`
+- **Config:** `serverActions.bodySizeLimit: "10mb"` (para upload de PDFs até 10MB)
 - **Gerenciamento:** Systemd service (`catequistas.service`), auto-start no boot, restart automático se cair
 - **Firewall:** iptables + UFW liberados para porta 3003
 - **Acesso SSH:** `ubuntu@137.131.187.156`, key em `~/.ssh/vps_key`
@@ -145,7 +160,8 @@ AppCatequistas/
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx                    # Landing page
-│   │   ├── layout.tsx                  # Root layout + PWA meta
+│   │   ├── opengraph-image.tsx         # OG image gerada via next/og
+│   │   ├── layout.tsx                  # Root layout + PWA meta + OG tags
 │   │   ├── (auth)/
 │   │   │   ├── login/
 │   │   │   └── recuperar-senha/
@@ -153,14 +169,17 @@ AppCatequistas/
 │   │   │   ├── dashboard/
 │   │   │   ├── encontros/
 │   │   │   ├── catequistas/
+│   │   │   │   └── telefones/          # Cadastro em lote de telefones
 │   │   │   ├── turmas/
 │   │   │   ├── presenca/               # Painel Admin (coordenação)
 │   │   │   ├── calendario/
 │   │   │   ├── importar/
 │   │   │   ├── notificacoes/
 │   │   │   ├── configuracoes/          # Alterar email/senha + backup
+│   │   │   ├── assistente/             # Chat com IA
 │   │   │   └── relatorios/
 │   │   │       ├── frequencia/
+│   │   │       ├── narrativo/          # Relatório mensal por IA
 │   │   │       └── exportar/
 │   │   ├── presenca/
 │   │   │   └── confirmar/             # Página pública (sem login)
@@ -169,7 +188,7 @@ AppCatequistas/
 │   │       └── backup/
 │   ├── actions/
 │   │   ├── auth.ts
-│   │   ├── catequistas.ts
+│   │   ├── catequistas.ts             # + salvarTelefones (batch)
 │   │   ├── encontros.ts
 │   │   ├── turmas.ts
 │   │   ├── presencas.ts               # Dispara Discord ao confirmar/justificar
@@ -178,7 +197,8 @@ AppCatequistas/
 │   │   ├── importar.ts
 │   │   ├── notificacoes.ts
 │   │   ├── config.ts                  # Get/set Configuracao
-│   │   └── upload.ts
+│   │   ├── upload.ts
+│   │   └── ai.ts                      # gerarResumo, gerarConteudoTema, gerarQuiz, etc
 │   ├── components/
 │   │   ├── ui/
 │   │   │   ├── select.tsx             # Radix-based Select
@@ -188,7 +208,8 @@ AppCatequistas/
 │   │   └── pwa/register.tsx
 │   ├── lib/
 │   │   ├── utils.ts
-│   │   └── prisma.ts                  # Singleton + LibSQL adapter
+│   │   ├── prisma.ts                  # Singleton + LibSQL adapter
+│   │   └── ai.ts                      # sendToAi + funções de prompt da IA
 │   └── proxy.ts                       # Route protection + Cache-Control headers
 ├── .env.example
 ├── .gitignore

@@ -2,15 +2,15 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle, Sparkles, Loader2, Copy, Check, AlertCircle } from "lucide-react"
+import { BarChart3, Users, AlertTriangle, Download, CheckCircle2, XCircle, Sparkles, Loader2, Copy, Check, AlertCircle, CalendarDays, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import type { PresencaRow, CatequistaFreq } from "@/actions/relatorios"
+import type { PresencaRow, CatequistaFreq, PresencaEncontroRow } from "@/actions/relatorios"
 
-type Tab = "individual" | "turma" | "baixa" | "analise_ia"
+type Tab = "individual" | "turma" | "baixa" | "encontro" | "analise_ia"
 
 interface Props {
   catequistas: { id: string; nome: string }[]
@@ -79,6 +79,17 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
             Baixa Frequência
           </button>
           <button
+            onClick={() => setTab("encontro")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
+              tab === "encontro"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Por Encontro
+          </button>
+          <button
             onClick={() => setTab("analise_ia")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
               tab === "analise_ia"
@@ -94,6 +105,7 @@ export function FrequenciaClient({ catequistas, turmas }: Props) {
         {tab === "individual" && <IndividualView catequistas={catequistas} />}
         {tab === "turma" && <TurmaView turmas={turmas} />}
         {tab === "baixa" && <BaixaView />}
+        {tab === "encontro" && <EncontroView />}
         {tab === "analise_ia" && <IaView />}
       </div>
     </>
@@ -434,6 +446,165 @@ function BaixaView() {
                   </table>
                 </div>
               </>
+            )}
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function EncontroView() {
+  const [encontros, setEncontros] = useState<{ id: string; label: string; data: string; tema: string; turma: string }[]>([])
+  const [encontroId, setEncontroId] = useState("")
+  const [loadingEncontros, setLoadingEncontros] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [resultado, setResultado] = useState<{
+    encontro: { id: string; tema: string; data: string; turma: string }
+    lista: PresencaEncontroRow[]
+    stats: { presentes: number; ausentes: number; pendentes: number; percentual: number; total: number }
+  } | null>(null)
+
+  async function carregarEncontros() {
+    if (encontros.length > 0) return
+    setLoadingEncontros(true)
+    const { getEncontrosDisponiveis } = await import("@/actions/relatorios")
+    const data = await getEncontrosDisponiveis()
+    setEncontros(data)
+    setLoadingEncontros(false)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!encontroId) return
+    setLoading(true)
+    const { getRelatorioEncontro } = await import("@/actions/relatorios")
+    const res = await getRelatorioEncontro(encontroId)
+    setResultado(res)
+    setLoading(false)
+  }
+
+  return (
+    <Card className="border-border/50">
+      <CardHeader>
+        <CardTitle className="text-base">Frequência por Encontro</CardTitle>
+        <CardDescription>Selecione um encontro específico para ver a lista de presença detalhada.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+          <div className="space-y-2">
+            <Label htmlFor="encontro-select">Encontro</Label>
+            <Select
+              value={encontroId}
+              onValueChange={setEncontroId}
+              onOpenChange={(open) => { if (open) carregarEncontros() }}
+            >
+              <SelectTrigger id="encontro-select" className="h-9">
+                <SelectValue placeholder={loadingEncontros ? "Carregando encontros..." : "Selecione um encontro..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingEncontros ? (
+                  <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando...
+                  </div>
+                ) : encontros.length === 0 ? (
+                  <div className="py-4 text-center text-sm text-muted-foreground">Nenhum encontro cadastrado.</div>
+                ) : (
+                  encontros.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={loading || !encontroId}>
+            {loading ? "Carregando..." : "Ver Presença"}
+          </Button>
+        </form>
+
+        {resultado && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            {/* Cabeçalho do encontro */}
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/15 space-y-1">
+              <p className="font-semibold text-sm">{resultado.encontro.tema}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDate(resultado.encontro.data)} · {resultado.encontro.turma}
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 rounded-lg bg-muted/30 text-center">
+                <p className="text-xl font-bold">{resultado.stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30 text-center">
+                <p className="text-xl font-bold text-primary">{resultado.stats.presentes}</p>
+                <p className="text-xs text-muted-foreground">Presentes</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30 text-center">
+                <p className="text-xl font-bold text-red-500">{resultado.stats.ausentes}</p>
+                <p className="text-xs text-muted-foreground">Ausentes</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30 text-center">
+                <p className={`text-xl font-bold ${
+                  resultado.stats.percentual >= 75 ? "text-primary" :
+                  resultado.stats.percentual >= 50 ? "text-yellow-500" : "text-red-500"
+                }`}>{resultado.stats.percentual}%</p>
+                <p className="text-xs text-muted-foreground">Frequência</p>
+              </div>
+            </div>
+
+            {/* Barra geral */}
+            <PercentBar value={resultado.stats.percentual} />
+
+            {/* Lista detalhada */}
+            {resultado.lista.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum catequista ativo nesta turma.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Catequista</th>
+                      <th className="text-center py-3 px-3 font-medium text-muted-foreground whitespace-nowrap">Status</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground whitespace-nowrap hidden md:table-cell">Justificativa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultado.lista.map((c, i) => (
+                      <motion.tr
+                        key={c.catequistaId}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.02 }}
+                        className="border-b border-border/20 hover:bg-muted/30"
+                      >
+                        <td className="py-3 px-3 font-medium">{c.nome}</td>
+                        <td className="py-3 px-3 text-center">
+                          {c.presente === true ? (
+                            <span className="inline-flex items-center gap-1 text-primary text-xs font-medium">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Presente
+                            </span>
+                          ) : c.presente === false ? (
+                            <span className="inline-flex items-center gap-1 text-red-500 text-xs font-medium">
+                              <XCircle className="h-3.5 w-3.5" /> Ausente
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs font-medium">
+                              <Clock className="h-3.5 w-3.5" /> Pendente
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
+                          {c.justificativa || "—"}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </motion.div>
         )}

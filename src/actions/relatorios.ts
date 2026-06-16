@@ -176,3 +176,87 @@ export async function getRelatorioBaixaFrequencia(
 
   return { catequistas: catequistasData }
 }
+
+export interface PresencaEncontroRow {
+  catequistaId: string
+  nome: string
+  turmas: string
+  presente: boolean | null
+  justificativa: string | null
+}
+
+export async function getEncontrosDisponiveis() {
+  const encontros = await prisma.encontro.findMany({
+    orderBy: { data: "desc" },
+    select: {
+      id: true,
+      tema: true,
+      data: true,
+      turma: { select: { nome: true } },
+    },
+  })
+
+  return encontros.map((e) => ({
+    id: e.id,
+    label: `${new Date(e.data).toLocaleDateString("pt-BR")} — ${e.tema} (${e.turma.nome})`,
+    data: e.data.toISOString(),
+    tema: e.tema,
+    turma: e.turma.nome,
+  }))
+}
+
+export async function getRelatorioEncontro(encontroId: string) {
+  const encontro = await prisma.encontro.findUnique({
+    where: { id: encontroId },
+    include: {
+      turma: { select: { nome: true, catequistas: { include: { catequista: { select: { id: true, nome: true, status: true, turmas: { include: { turma: { select: { nome: true } } } } } } } } } },
+      presencas: {
+        include: { catequista: { select: { id: true, nome: true } } },
+      },
+    },
+  })
+
+  if (!encontro) return null
+
+  // Todos catequistas ativos da turma
+  const catequistasDaTurma = encontro.turma.catequistas
+    .map((tc) => tc.catequista)
+    .filter((c) => c.status === "ATIVO")
+
+  const presencaMap = new Map(
+    encontro.presencas.map((p) => [p.catequistaId, p])
+  )
+
+  const lista: PresencaEncontroRow[] = catequistasDaTurma.map((c) => {
+    const reg = presencaMap.get(c.id)
+    return {
+      catequistaId: c.id,
+      nome: c.nome,
+      turmas: c.turmas.map((t) => t.turma.nome).join(", "),
+      presente: reg ? reg.presente : null,
+      justificativa: reg?.justificativa ?? null,
+    }
+  })
+
+  // Ordenar: presentes, pendentes, ausentes
+  lista.sort((a, b) => {
+    const order = (v: boolean | null) => (v === true ? 0 : v === null ? 1 : 2)
+    return order(a.presente) - order(b.presente) || a.nome.localeCompare(b.nome)
+  })
+
+  const presentes = lista.filter((c) => c.presente === true).length
+  const ausentes = lista.filter((c) => c.presente === false).length
+  const pendentes = lista.filter((c) => c.presente === null).length
+  const percentual = lista.length > 0 ? Math.round((presentes / lista.length) * 100) : 0
+
+  return {
+    encontro: {
+      id: encontro.id,
+      tema: encontro.tema,
+      data: encontro.data.toISOString(),
+      turma: encontro.turma.nome,
+    },
+    lista,
+    stats: { presentes, ausentes, pendentes, percentual, total: lista.length },
+  }
+}

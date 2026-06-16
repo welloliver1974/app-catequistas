@@ -45,7 +45,7 @@
 | **Resumo em áudio** (TTS) | ~30 min | Pendente |
 | **Quiz automático** (IA gera perguntas sobre o tema) | ~1h | Pendente |
 | **QR code p/ confirmação de presença** | ~1h | Pendente |
-| **Aviso inteligente no WhatsApp** (sugestão baseada no histórico) | ~1h | Pendente |
+| **Aviso inteligente no WhatsApp** (sugestão baseada no histórico) | ~1h | ✅ Concluído |
 | **Análise de temas recorrentes** (IA detecta padrões nos resumos) | ~1h | Pendente |
 
 ---
