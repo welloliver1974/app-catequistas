@@ -54,7 +54,7 @@ sudo apt install -y nginx
 # Configure /etc/nginx/sites-available/catequistas apontando para localhost:3000
 ```
 
-O app roda em `http://localhost:3000`. Use Nginx como proxy reverso com SSL (Certbot) pra expor na porta 443.
+O app roda em `http://localhost:3003`. Use Nginx como proxy reverso com SSL (Certbot) pra expor na porta 443.
 
 ## Estrutura
 

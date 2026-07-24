@@ -35,6 +35,8 @@
 - [x] Vincular catequistas à turma ao criar/importar (catequistas.ts, importar.ts)
 - [x] Systemd service com auto-restart no boot
 - [x] ExecStartPre que mata processo na porta 3003 antes de iniciar
+- [x] **Quiz automático** — IA gera perguntas de múltipla escolha sobre o tema
+- [x] **Resumo em áudio (TTS)** — Web Speech API lê o resumo do encontro em voz alta
 
 ## 🔲 Pendente
 
@@ -42,8 +44,6 @@
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
-| **Resumo em áudio** (TTS) | ~30 min | Pendente |
-| **Quiz automático** (IA gera perguntas sobre o tema) | ~1h | Pendente |
 | **QR code p/ confirmação de presença** | ~1h | Pendente |
 | **Aviso inteligente no WhatsApp** (sugestão baseada no histórico) | ~1h | ✅ Concluído |
 | **Análise de temas recorrentes** (IA detecta padrões nos resumos) | ~1h | Pendente |

@@ -1,4 +1,8 @@
-# PWA + Chamada Offline — AppCatequistas
+# 🗂️ ARQUIVADO — PWA + Chamada Offline
+
+> Este plano foi arquivado. A parte de **PWA** (manifest, service worker, ícones) foi implementada.
+> A funcionalidade **Chamada Offline** (`/presenca/chamada`) ainda não foi desenvolvida.
+> Mantido como referência para implementação futura.
 
 Instalar o app no celular como PWA e permitir fazer chamada sem internet.
 
