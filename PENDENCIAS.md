@@ -37,6 +37,7 @@
 - [x] ExecStartPre que mata processo na porta 3003 antes de iniciar
 - [x] **Quiz automático** — IA gera perguntas de múltipla escolha sobre o tema
 - [x] **Resumo em áudio (TTS)** — Web Speech API lê o resumo do encontro em voz alta
+- [x] **Mensagens para grupo WhatsApp** — Página com 4 tipos de mensagem geradas por IA (lembrete, agradecimento, comunicado, livre) com cópia automática
 
 ## 🔲 Pendente
 

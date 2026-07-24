@@ -97,6 +97,15 @@
 - Layout com gap-px para visual limpo
 - Lista completa de encontros abaixo
 
+### Mensagens para Grupo WhatsApp
+- Página dedicada em `/mensagens` com 4 tipos de mensagem geradas por IA:
+  - **Lembrete de encontro**: IA busca o próximo encontro e gera aviso com data, tema, local e link de presença
+  - **Agradecimento pós-encontro**: seleciona encontro passado, IA cria mensagem de gratidão com resumo
+  - **Comunicado especial**: coordenador descreve o que comunicar, IA transforma em texto claro e acolhedor
+  - **Mensagem livre**: coordenador escreve, IA melhora o tom e corrige
+- Botão de cópia automática para área de transferência
+- Botão para abrir diretamente no WhatsApp Web
+
 ### Notificações
 - Discord via Webhook
 - Mensagem personalizada
@@ -175,6 +184,7 @@ AppCatequistas/
 │   │   │   ├── calendario/
 │   │   │   ├── importar/
 │   │   │   ├── notificacoes/
+│   │   │   ├── mensagens/              # Mensagens WhatsApp com IA
 │   │   │   ├── configuracoes/          # Alterar email/senha + backup
 │   │   │   ├── assistente/             # Chat com IA
 │   │   │   └── relatorios/

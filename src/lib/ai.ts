@@ -247,6 +247,130 @@ Use linguagem pastoral e não punitiva. Responda APENAS com a análise em markdo
   return await sendToAi(prompt, config, 0.5)
 }
 
+export async function gerarMensagemGrupo(dados: {
+  tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
+  tema?: string
+  data?: string
+  local?: string
+  turma?: string
+  linkPresenca?: string
+  resumo?: string
+  instrucao?: string // para convocação: o que comunicar
+  mensagemUsuario?: string // para livre: texto do usuário
+  totalCatequistas?: number
+  presentes?: number
+  ausentes?: number
+}): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const prompt = geraPromptMensagem(dados)
+  return await sendToAi(prompt, config, 0.7)
+}
+
+function geraPromptMensagem(dados: {
+  tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
+  tema?: string
+  data?: string
+  local?: string
+  turma?: string
+  linkPresenca?: string
+  resumo?: string
+  instrucao?: string
+  mensagemUsuario?: string
+  totalCatequistas?: number
+  presentes?: number
+  ausentes?: number
+}): string {
+  const base = `Você é um coordenador de catequese acolhedor e pastoral. Escreva uma mensagem para o grupo de WhatsApp dos catequistas.
+
+REGRAS IMPORTANTES:
+- Use linguagem calorosa, pastoral e acolhedora
+- No máximo 8 linhas
+- NÃO use emojis
+- NÃO use markdown
+- Use quebras de linha para separar ideias
+- Termine com uma saudação cristã ("Paz e bem!", "Deus abençoe a todos!", etc.)
+- Inclua o link de presença quando relevante: ${dados.linkPresenca || "https://catequistas.housecloud.tec.br/presenca/confirmar"}`
+
+  switch (dados.tipo) {
+    case "lembrete":
+      return `${base}
+
+Tipo: LEMBRETE DE ENCONTRO
+
+Dados do próximo encontro:
+- Data: ${dados.data || "[data do encontro]"}
+- Tema: ${dados.tema || "[tema do encontro]"}
+- Local: ${dados.local || "[local do encontro]"}
+${dados.turma ? `- Turma: ${dados.turma}` : ""}
+
+A mensagem deve:
+1. Saudar os catequistas com entusiasmo
+2. Anunciar o próximo encontro com data, tema e local
+3. Convidar para confirmar presença pelo link
+4. Incentivar a participação de todos
+5. Encerrar com saudação cristã
+
+Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+
+    case "agradecimento":
+      return `${base}
+
+Tipo: AGRADECIMENTO PÓS-ENCONTRO
+
+Dados do encontro realizado:
+- Data: ${dados.data || "[data]"}
+- Tema: ${dados.tema || "[tema]"}
+- Local: ${dados.local || "[local]"}
+${dados.totalCatequistas ? `- Presenças: ${dados.presentes || 0} de ${dados.totalCatequistas} catequistas` : ""}
+${dados.resumo ? `- Resumo do encontro: ${dados.resumo}` : ""}
+
+A mensagem deve:
+1. Agradecer a presença de todos
+2. Compartilhar um breve resumo do que foi abordado
+3. Se houver ausentes, mencionar que sentimos falta e que o link continua disponível para conteúdo
+4. Se houver próximo encontro agendado, já adiantar a data
+5. Encerrar com gratidão e saudação cristã
+
+Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+
+    case "convocacao":
+      return `${base}
+
+Tipo: COMUNICADO ESPECIAL
+
+Instrução do coordenador: ${dados.instrucao || "[instrução]"}
+${dados.data ? `- Data relacionada: ${dados.data}` : ""}
+
+A mensagem deve:
+1. Transmitir o comunicado de forma clara e acolhedora
+2. Manter o tom pastoral e respeitoso
+3. Incluir orientações práticas (o que fazer, quando, onde)
+4. Convidar para tirar dúvidas se necessário
+5. Encerrar com saudação cristã
+
+Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+
+    case "livre":
+      return `${base}
+
+Tipo: MENSAGEM LIVRE
+
+Rascunho do coordenador:
+"""
+${dados.mensagemUsuario || "[mensagem do coordenador]"}
+"""
+
+Reescreva a mensagem acima mantendo o sentido original, mas melhorando o tom para ser mais acolhedora, pastoral e clara para um grupo de catequistas. Corrija qualquer erro de português se necessário. Mantenha o mesmo conteúdo e intenção.
+
+Responda APENAS com a versão melhorada da mensagem, pronta para copiar e colar no grupo.`
+
+    default:
+      return base
+  }
+}
+
 async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, maxRetries = 2): Promise<string> {
   const url = config.provider === "groq" ? GROQ_URL : OPENROUTER_URL
   const model = config.model

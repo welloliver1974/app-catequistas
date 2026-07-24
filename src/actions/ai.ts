@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi } from "@/lib/ai"
+import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi, gerarMensagemGrupo as gerarMensagemGrupoAi } from "@/lib/ai"
 import { revalidatePath } from "next/cache"
 
 export async function salvarConfigAi(formData: FormData) {
@@ -302,5 +302,113 @@ export async function analisarFaltasRecorrentes() {
     return { success: true, analise }
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao analisar faltas." }
+  }
+}
+
+// ─── Mensagem para Grupo WhatsApp ───────────────────────────────────────────
+export async function gerarMensagemGrupo(params: {
+  tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
+  encontroId?: string
+  instrucao?: string
+  mensagemUsuario?: string
+}) {
+  try {
+    const baseUrl = "https://catequistas.housecloud.tec.br"
+
+    // Para lembrete, busca o próximo encontro automaticamente
+    if (params.tipo === "lembrete") {
+      const agora = new Date()
+      const encontro = await prisma.encontro.findFirst({
+        where: { data: { gte: agora } },
+        orderBy: { data: "asc" },
+        include: { turma: { select: { nome: true } } },
+      })
+      if (!encontro) return { error: "Nenhum encontro futuro agendado." }
+
+      const mensagem = await gerarMensagemGrupoAi({
+        tipo: "lembrete",
+        tema: encontro.tema,
+        data: encontro.data.toLocaleDateString("pt-BR"),
+        local: encontro.local || encontro.turma.nome,
+        turma: encontro.turma.nome,
+        linkPresenca: `${baseUrl}/presenca/confirmar`,
+      })
+      return { success: true, mensagem, encontro: encontro.tema }
+    }
+
+    // Para agradecimento, busca o encontro selecionado
+    if (params.tipo === "agradecimento" && params.encontroId) {
+      const encontro = await prisma.encontro.findUnique({
+        where: { id: params.encontroId },
+        include: {
+          turma: { select: { nome: true } },
+          presencas: { select: { presente: true } },
+        },
+      })
+      if (!encontro) return { error: "Encontro não encontrado." }
+
+      const totalCatequistas = await prisma.catequista.count({
+        where: { status: "ATIVO" },
+      })
+      const presentes = encontro.presencas.filter((p) => p.presente).length
+      const ausentes = encontro.presencas.length - presentes
+
+      const mensagem = await gerarMensagemGrupoAi({
+        tipo: "agradecimento",
+        tema: encontro.tema,
+        data: encontro.data.toLocaleDateString("pt-BR"),
+        local: encontro.local || encontro.turma?.nome || "Não informado",
+        resumo: encontro.resumo || undefined,
+        totalCatequistas,
+        presentes,
+        ausentes,
+        linkPresenca: `${baseUrl}/presenca/confirmar`,
+      })
+      return { success: true, mensagem, encontro: encontro.tema }
+    }
+
+    // Para convocação
+    if (params.tipo === "convocacao") {
+      if (!params.instrucao?.trim()) return { error: "Digite o comunicado." }
+      const mensagem = await gerarMensagemGrupoAi({
+        tipo: "convocacao",
+        instrucao: params.instrucao,
+        linkPresenca: `${baseUrl}/presenca/confirmar`,
+      })
+      return { success: true, mensagem }
+    }
+
+    // Para mensagem livre
+    if (params.tipo === "livre") {
+      if (!params.mensagemUsuario?.trim()) return { error: "Digite a mensagem." }
+      const mensagem = await gerarMensagemGrupoAi({
+        tipo: "livre",
+        mensagemUsuario: params.mensagemUsuario,
+        linkPresenca: `${baseUrl}/presenca/confirmar`,
+      })
+      return { success: true, mensagem }
+    }
+
+    return { error: "Tipo de mensagem inválido." }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao gerar mensagem." }
+  }
+}
+
+export async function listarEncontrosPassados() {
+  try {
+    const agora = new Date()
+    const encontros = await prisma.encontro.findMany({
+      where: { data: { lt: agora } },
+      orderBy: { data: "desc" },
+      take: 20,
+      select: { id: true, tema: true, data: true },
+    })
+    return encontros.map((e) => ({
+      id: e.id,
+      label: `${e.data.toLocaleDateString("pt-BR")} — ${e.tema}`,
+    }))
+  } catch {
+    return []
   }
 }
