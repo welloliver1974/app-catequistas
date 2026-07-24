@@ -24,11 +24,11 @@ BACKUP_FILE="$BACKUP_DIR/backup-$TIMESTAMP.db"
 cp "$DB_PATH" "$BACKUP_FILE"
 echo "Backup local: $BACKUP_FILE"
 
-# Sincroniza pasta de backups com Google Drive
-rclone sync "$BACKUP_DIR" "$RCLONE_REMOTE:$RCLONE_PATH" --backup-dir "$RCLONE_REMOTE:$RCLONE_PATH/old" --delete-excluded 2>&1
-echo "Sincronizado com Google Drive: $RCLONE_REMOTE:$RCLONE_PATH"
+# Envia para Google Drive
+rclone copy "$BACKUP_FILE" "$RCLONE_REMOTE:$RCLONE_PATH/" 2>&1
+echo "Enviado para Google Drive: $RCLONE_REMOTE:$RCLONE_PATH/"
 
 # Remove backups locais mais antigos que 30 dias
 find "$BACKUP_DIR" -name "backup-*.db" -mtime +30 -delete
-echo "Backups antigos (>30 dias) removidos."
+echo "Backups locais antigos (>30 dias) removidos."
 echo "Backup concluido com sucesso!"

@@ -66,38 +66,25 @@ Automático via cron (03:00, retenção de 30 dias):
 ./scripts/backup.sh
 ```
 
-### Backup na nuvem (Google Drive)
+### Backup na nuvem (Google Drive) ✅
 
-Os backups são sincronizados automaticamente para o Google Drive todos os dias às 03:05.
+O backup é enviado automaticamente para o Google Drive todos os dias às 03:05.
 
-**Pré-requisito (fazer UMA VEZ):** Configurar o rclone com sua conta Google.
+**Pasta no Drive:** `catequistas-backups`
 
-```bash
-# Conecte no servidor
-ssh meu-vps
-
-# Configure o Google Drive (precisa de navegador para autenticar)
-rclone config
-
-# Siga o assistente:
-#   1. "n" (new remote)
-#   2. Nome: "gdrive"
-#   3. Selecione "drive" (Google Drive)
-#   4. Deixe client_id e client_secret em branco (usa padrão)
-#   5. Selecione "1" (Full access)
-#   6. Deixe service_account_file em branco
-#   7. "n" (no advanced config)
-#   8. "y" (yes, auto config) → abre navegador para autenticar
-#   9. "q" (quit)
-```
-
-Após configurar, o backup para a nuvem roda automaticamente. Para testar:
+**Testar manualmente:**
 
 ```bash
 ./scripts/backup-cloud.sh
 ```
 
-> ⚠️ O `rclone config` precisa de um navegador. Se estiver no terminal sem interface, use `rclone config --headless` e siga as instruções.
+**Listar backups no Drive:**
+
+```bash
+rclone ls gdrive:catequistas-backups/
+```
+
+> ⚠️ O rclone usa o client_id compartilhado. Se parar de funcionar, crie seu próprio: https://rclone.org/drive/#making-your-own-client-id
 
 ### Restart do Cloudflare Tunnel
 
