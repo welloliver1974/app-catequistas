@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Phone, Save, CheckCircle2, Loader2, User } from "lucide-react"
+import Link from "next/link"
+import { Phone, Save, CheckCircle2, Loader2, User, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -57,6 +58,11 @@ export function TelefonesClient({ semTelefone, comTelefone }: Props) {
             <CardDescription>
               Veja a lista de participantes do grupo no WhatsApp e digite o número ao lado de cada nome.
             </CardDescription>
+            <div className="mt-2">
+              <Link href="/catequistas/telefones/importar" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+                <Upload className="h-3 w-3" /> Importar do WhatsApp export
+              </Link>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {semTelefone.length === 0 ? (
