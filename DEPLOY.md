@@ -14,8 +14,11 @@
 ## 🔑 Acesso SSH
 
 ```bash
-ssh -i ~/.ssh/vps_key ubuntu@137.131.187.156
+ssh meu-vps
 ```
+
+> A chave SSH está configurada no arquivo `~/.ssh/config` do usuário `welld`.
+> Não compartilhe arquivos de chave privada (.key, .pem).
 
 ## 🚀 Deploy manual
 
