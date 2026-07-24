@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { enviarPushNotificacao } from "@/lib/push"
 
 async function notificarDiscordPresenca(
   catequistaNome: string,
@@ -62,6 +63,11 @@ export async function confirmarPresenca(encontroId: string, catequistaId: string
 
   if (catequista && encontro) {
     await notificarDiscordPresenca(catequista.nome, encontro.tema, true)
+    await enviarPushNotificacao(
+      "✅ Presença Confirmada",
+      `${catequista.nome} confirmou presença no encontro "${encontro.tema}"`,
+      "/presenca"
+    )
   }
 
   revalidatePath("/presenca")
@@ -103,6 +109,11 @@ export async function justificarAusencia(encontroId: string, catequistaId: strin
 
   if (catequista && encontro) {
     await notificarDiscordPresenca(catequista.nome, encontro.tema, false, justificativa.trim())
+    await enviarPushNotificacao(
+      "❌ Ausência Justificada",
+      `${catequista.nome} justificou ausência no encontro "${encontro.tema}": ${justificativa.trim()}`,
+      "/presenca"
+    )
   }
 
   revalidatePath("/presenca")

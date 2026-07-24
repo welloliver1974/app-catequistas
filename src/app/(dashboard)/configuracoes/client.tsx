@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff } from "lucide-react"
+import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { changeEmail, resetPassword } from "@/actions/auth"
 import { salvarConfigAi } from "@/actions/ai"
 import { MODELOS_SUGERIDOS } from "@/lib/modelos-ai"
+import { PushManager } from "@/components/push/push-manager"
 
 interface Backup {
   name: string
@@ -269,6 +270,18 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
                   </motion.p>
                 )}
               </form>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Bell className="h-4 w-4" /> Notificações Push
+              </CardTitle>
+              <CardDescription>Receba notificações no celular quando catequistas confirmarem presença.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PushManager />
             </CardContent>
           </Card>
 
