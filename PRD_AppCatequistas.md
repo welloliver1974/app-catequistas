@@ -121,6 +121,20 @@
 - Ícones SVG
 - Instalável na tela inicial
 
+### Tema
+- Dark/Light mode com alternância via botão no menu lateral
+- Salva preferência no `localStorage` com fallback para dark
+- Script inline anti-FOUC para evitar flash de tema incorreto
+- CSS variables para light e dark via Tailwind v4 + Shadcn/ui
+
+### Notificações Push
+- **Service Worker v4**: handlers para `push` e `notificationclick`
+- **API `/api/push/subscribe`**: salva/remove subscription no banco (model `Configuracao`)
+- **Componente PushManager**: botão "Ativar/Desativar" em Configurações
+- **VAPID keys**: geradas e configuradas com `web-push`
+- Disparo automático ao confirmar presença ou justificar ausência
+- Abre o app ao clicar na notificação
+
 ### Open Graph / Preview
 - Imagem OG gerada dinamicamente via `ImageResponse` (next/og) — gradiente escuro + ícone igreja + título
 - Metadados `og:image`, `og:title`, `og:description`, `twitter:card` configurados no layout raiz

@@ -38,6 +38,9 @@
 - [x] **Quiz automático** — IA gera perguntas de múltipla escolha sobre o tema
 - [x] **Resumo em áudio (TTS)** — Web Speech API lê o resumo do encontro em voz alta
 - [x] **Mensagens para grupo WhatsApp** — Página com 4 tipos de mensagem geradas por IA (lembrete, agradecimento, comunicado, livre) com cópia automática
+- [x] **Tema claro/escuro** — Alternância entre dark e light com botão no menu, salva preferência no localStorage
+- [x] **Backup nuvem (Google Drive)** — Backup automático do banco via rclone, cron diário 03:05
+- [x] **Notificação Push** — Recebe push no celular quando catequista confirma presença ou justifica ausência
 
 ## 🔲 Pendente
 
