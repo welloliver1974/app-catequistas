@@ -5,9 +5,10 @@ import { ViewTransition } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
-import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Download, Settings, LogOut, Bot, Menu, X, Phone, MessageCircle } from "lucide-react"
+import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Download, Settings, LogOut, Bot, Menu, X, Phone, MessageCircle, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/actions/auth"
+import { useTheme } from "@/lib/theme-provider"
 
 interface User {
   name: string
@@ -49,6 +50,7 @@ export function DashboardLayoutClient({
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -85,6 +87,13 @@ export function DashboardLayoutClient({
           })}
         </nav>
         <div className="p-4 border-t border-border/40 space-y-3">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
+          </button>
           {user && (
             <div className="text-sm">
               <p className="font-medium">{user.name}</p>
@@ -200,8 +209,19 @@ export function DashboardLayoutClient({
                   })}
                 </div>
 
+                {/* Theme Toggle */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => { toggleTheme(); setIsMobileMenuOpen(false) }}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-border/50 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                  >
+                    {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    {theme === "dark" ? "Tema Claro" : "Tema Escuro"}
+                  </button>
+                </div>
+
                 {/* Logout Action */}
-                <div className="mt-6 pt-5 border-t border-border/20">
+                <div className="mt-4 pt-5 border-t border-border/20">
                   <form action={logoutAction} onSubmit={() => setIsMobileMenuOpen(false)}>
                     <Button type="submit" variant="destructive" className="w-full gap-2 text-xs h-10">
                       <LogOut className="h-4 w-4" />

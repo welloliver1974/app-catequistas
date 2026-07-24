@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { PWARegister } from "@/components/pwa/register";
+import { ThemeProvider } from "@/lib/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,16 +53,20 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
-      style={{ colorScheme: "dark" }}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
-        <meta name="theme-color" content="#22c55e" />
+        <script dangerouslySetInnerHTML={{
+          __html: `(function(){var t=localStorage.getItem("theme")||"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t;document.querySelector('meta[name="theme-color"]')?.setAttribute("content",t==="dark"?"#0a0a0f":"#ffffff")})()`,
+        }} />
+        <meta name="theme-color" content="#0a0a0f" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground" style={{ backgroundColor: "#0a0a0f", colorScheme: "dark" }}>
-        {children}
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         <PWARegister />
       </body>
     </html>
