@@ -8,8 +8,8 @@ function extrairNumeros(texto: string): string[] {
   const regex = /\+?55\s*\(?\d{2}\)?\s*\d{4,5}-?\s*\d{4}/g
   const encontrados = texto.match(regex) || []
   // Limpa e remove duplicatas
-  const numeros = [...new Set(encontrados.map((n) => n.replace(/\D/g, "")))]
-  return numeros.filter((n) => n.length >= 12) // 55 + 2 DDD + 8/9 número
+  const numeros = [...new Set(encontrados.map((n) => n.replace(/\D/g, "").replace(/^55/, "")))]
+  return numeros.filter((n) => n.length >= 10) // DDD + 8/9 número
 }
 
 export async function parseWhatsAppExport(formData: FormData) {
@@ -53,7 +53,7 @@ export async function salvarTelefonesImportados(dados: { catequistaId: string; t
   let err = 0
   for (const { catequistaId, telefone } of dados) {
     try {
-      const digits = telefone.replace(/\D/g, "")
+      const digits = telefone.replace(/\D/g, "").replace(/^55/, "")
       await prisma.catequista.update({
         where: { id: catequistaId },
         data: { telefone: digits },

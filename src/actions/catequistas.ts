@@ -15,7 +15,7 @@ export async function criarCatequista(formData: FormData) {
     data: {
       nome,
       email,
-      telefone: telefone || null,
+      telefone: telefone ? telefone.replace(/\D/g, "").replace(/^55/, "") : null,
       observacoes: observacoes || null,
       dataEntrada: new Date(),
       turmas: turma ? { create: [{ turmaId: turma.id }] } : undefined,
@@ -37,7 +37,7 @@ export async function atualizarCatequista(id: string, formData: FormData) {
     data: {
       nome,
       email,
-      telefone: telefone || null,
+      telefone: telefone ? telefone.replace(/\D/g, "").replace(/^55/, "") : null,
       status: status as "ATIVO" | "INATIVO",
       observacoes: observacoes || null,
     },
@@ -56,7 +56,7 @@ export async function salvarTelefones(dados: { id: string; telefone: string }[])
   let err = 0
   for (const { id, telefone } of dados) {
     try {
-      const digits = telefone.replace(/\D/g, "")
+      const digits = telefone.replace(/\D/g, "").replace(/^55/, "")
       await prisma.catequista.update({
         where: { id },
         data: { telefone: digits || null },
