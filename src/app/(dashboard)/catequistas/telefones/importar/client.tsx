@@ -14,6 +14,14 @@ interface Catequista {
   telefone: string | null
 }
 
+function formatTel(raw: string) {
+  const s = raw.replace(/\D/g, "").replace(/^55/, "")
+  if (s.length >= 12) return `${s.slice(0,2)} ${s.slice(2,7)}-${s.slice(7)}`
+  if (s.length === 11) return `(${s.slice(0,2)}) ${s.slice(2,7)}-${s.slice(7)}`
+  if (s.length === 10) return `(${s.slice(0,2)}) ${s.slice(2,6)}-${s.slice(6)}`
+  return raw
+}
+
 export function ImportarWhatsAppClient() {
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -23,6 +31,7 @@ export function ImportarWhatsAppClient() {
   const [atribuicoes, setAtribuicoes] = useState<Record<string, string>>({}) // catequistaId -> numero
   const [saving, setSaving] = useState(false)
   const [resultado, setResultado] = useState<{ ok: number; err: number } | null>(null)
+  const [filtro, setFiltro] = useState("")
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
@@ -142,7 +151,7 @@ export function ImportarWhatsAppClient() {
               <div className="flex flex-wrap gap-2">
                 {numeros.map((n) => (
                   <span key={n} className="px-3 py-1 rounded-full bg-muted text-xs font-mono">
-                    {n.replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3")}
+                    {formatTel(n)}
                   </span>
                 ))}
               </div>
@@ -163,54 +172,65 @@ export function ImportarWhatsAppClient() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
+              {/* Filtro */}
+              <div className="px-4 sm:px-6 py-3 border-b border-border/20">
+                <input
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  placeholder="Filtrar números... digite os últimos dígitos"
+                  className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
               <div className="divide-y divide-border/20">
-                {semTelefone.map((c) => (
-                  <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3">
-                    <span className="flex-1 text-sm font-medium truncate">{c.nome}</span>
-                    <select
-                      value={atribuicoes[c.id] || ""}
-                      onChange={(e) => {
-                        setAtribuicoes((prev) => {
-                          const next = { ...prev }
-                          if (e.target.value) {
-                            next[c.id] = e.target.value
-                          } else {
-                            delete next[c.id]
-                          }
-                          return next
-                        })
-                      }}
-                      className="w-48 h-9 rounded-lg border border-input bg-background px-3 py-1 text-xs font-mono"
-                    >
-                      <option value="">— selecione —</option>
-                      {numeros
-                        .filter((n) => {
-                          // Mostra números que já foram atribuídos (inclusive este) ou estão livres
-                          const jaUsado = Object.values(atribuicoes).includes(n)
-                          return atribuicoes[c.id] === n || !jaUsado
-                        })
-                        .map((n) => (
-                          <option key={n} value={n}>
-                            {n.replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3")}
-                          </option>
-                        ))}
-                    </select>
-                    {atribuicoes[c.id] && (
-                      <button
-                        onClick={() => {
+                {semTelefone.map((c) => {
+                  const numerosFiltrados = numeros.filter((n) => {
+                    const jaUsado = Object.values(atribuicoes).includes(n)
+                    if (atribuicoes[c.id] !== n && jaUsado) return false
+                    if (!filtro) return true
+                    return n.replace(/\D/g, "").includes(filtro.replace(/\D/g, ""))
+                  })
+                  return (
+                    <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3">
+                      <span className="flex-1 text-sm font-medium truncate">{c.nome}</span>
+                      <select
+                        value={atribuicoes[c.id] || ""}
+                        onChange={(e) => {
                           setAtribuicoes((prev) => {
                             const next = { ...prev }
-                            delete next[c.id]
+                            if (e.target.value) {
+                              next[c.id] = e.target.value
+                            } else {
+                              delete next[c.id]
+                            }
                             return next
                           })
                         }}
-                        className="text-xs text-muted-foreground hover:text-red-500"
+                        className="w-48 h-9 rounded-lg border border-input bg-background px-3 py-1 text-xs font-mono"
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        <option value="">— selecione —</option>
+                        {numerosFiltrados.map((n) => (
+                          <option key={n} value={n}>
+                            {formatTel(n)}
+                          </option>
+                        ))}
+                      </select>
+                      {atribuicoes[c.id] && (
+                        <button
+                          onClick={() => {
+                            setAtribuicoes((prev) => {
+                              const next = { ...prev }
+                              delete next[c.id]
+                              return next
+                            })
+                          }}
+                          className="text-xs text-muted-foreground hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
