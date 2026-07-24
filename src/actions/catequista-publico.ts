@@ -42,7 +42,7 @@ export async function getHistoricoCatequista(catequistaId: string, telefone: str
     where: { catequistaId },
     include: {
       encontro: {
-        select: { id: true, tema: true, data: true },
+        select: { id: true, tema: true, data: true, resumo: true },
       },
     },
     orderBy: { encontro: { data: "desc" } },
@@ -65,6 +65,7 @@ export async function getHistoricoCatequista(catequistaId: string, telefone: str
     data: p.encontro.data.toLocaleDateString("pt-BR"),
     presente: p.presente,
     justificativa: p.justificativa,
+    resumo: p.encontro.resumo,
   }))
 
   return { stats, historico }

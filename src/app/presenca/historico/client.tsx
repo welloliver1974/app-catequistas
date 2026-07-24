@@ -37,9 +37,11 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
     data: string
     presente: boolean
     justificativa: string | null
+    resumo: string | null
   }[]>([])
   const [mural] = useState(muralInicial)
   const [mostrarTel, setMostrarTel] = useState(false)
+  const [expandido, setExpandido] = useState<string | null>(null)
 
   async function handleSelectCatequista(id: string) {
     setSelectedId(id)
@@ -255,32 +257,58 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
                 className="rounded-xl border border-border/30 overflow-hidden"
               >
                 <div className="divide-y divide-border/20">
-                  {historico.map((item, i) => (
-                    <motion.div
-                      key={`${item.data}-${i}`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.02 }}
-                      className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.tema}</p>
-                        <p className="text-xs text-muted-foreground">{item.data}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
-                        {item.presente ? (
-                          <span className="flex items-center gap-1 text-primary text-xs font-medium">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Presente
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-yellow-500 text-xs font-medium">
-                            <XCircle className="h-3.5 w-3.5" /> Ausente
-                            {item.justificativa && <span className="text-muted-foreground font-normal">: {item.justificativa}</span>}
-                          </span>
+                  {historico.map((item, i) => {
+                    const isExpandido = expandido === `${item.data}-${i}`
+                    const temResumo = !!item.resumo
+                    return (
+                      <div key={`${item.data}-${i}`}>
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.02 }}
+                          className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{item.tema}</p>
+                            <p className="text-xs text-muted-foreground">{item.data}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 ml-3">
+                            {temResumo && (
+                              <button
+                                onClick={() => setExpandido(isExpandido ? null : `${item.data}-${i}`)}
+                                className="text-[11px] text-primary hover:text-primary/80 font-medium transition-colors"
+                              >
+                                {isExpandido ? "Fechar resumo" : "Ver resumo"}
+                              </button>
+                            )}
+                            {item.presente ? (
+                              <span className="flex items-center gap-1 text-primary text-xs font-medium">
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Presente
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-yellow-500 text-xs font-medium">
+                                <XCircle className="h-3.5 w-3.5" /> Ausente
+                                {item.justificativa && <span className="text-muted-foreground font-normal">: {item.justificativa}</span>}
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                        {/* Resumo expansível */}
+                        {isExpandido && temResumo && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="px-4 sm:px-6 pb-4 pt-1"
+                          >
+                            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                              {item.resumo}
+                            </div>
+                          </motion.div>
                         )}
                       </div>
-                    </motion.div>
-                  ))}
+                    )
+                  })}
                 </div>
               </motion.div>
             )}
