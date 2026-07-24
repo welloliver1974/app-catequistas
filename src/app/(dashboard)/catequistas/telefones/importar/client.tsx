@@ -31,7 +31,6 @@ export function ImportarWhatsAppClient() {
   const [atribuicoes, setAtribuicoes] = useState<Record<string, string>>({}) // catequistaId -> numero
   const [saving, setSaving] = useState(false)
   const [resultado, setResultado] = useState<{ ok: number; err: number } | null>(null)
-  const [filtro, setFiltro] = useState("")
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
@@ -76,6 +75,29 @@ export function ImportarWhatsAppClient() {
   }
 
   const temAtribuicoes = Object.keys(atribuicoes).length > 0
+
+  // ─── SearchableSelect ──────────────────────────────────────────
+  const [buscaAberta, setBuscaAberta] = useState<string | null>(null) // catequistaId com busca aberta
+  const [termoBusca, setTermoBusca] = useState("")
+
+  function abrirBusca(id: string) {
+    setBuscaAberta(id)
+    setTermoBusca("")
+  }
+
+  function selecionarNumero(catequistaId: string, numero: string) {
+    setAtribuicoes((prev) => ({ ...prev, [catequistaId]: numero }))
+    setBuscaAberta(null)
+    setTermoBusca("")
+  }
+
+  function removerAtribuicao(id: string) {
+    setAtribuicoes((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
 
   return (
     <>
@@ -172,61 +194,81 @@ export function ImportarWhatsAppClient() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              {/* Filtro */}
-              <div className="px-4 sm:px-6 py-3 border-b border-border/20">
-                <input
-                  value={filtro}
-                  onChange={(e) => setFiltro(e.target.value)}
-                  placeholder="Filtrar números... digite os últimos dígitos"
-                  className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-              </div>
               <div className="divide-y divide-border/20">
                 {semTelefone.map((c) => {
-                  const numerosFiltrados = numeros.filter((n) => {
+                  const numerosDisponiveis = numeros.filter((n) => {
                     const jaUsado = Object.values(atribuicoes).includes(n)
-                    if (atribuicoes[c.id] !== n && jaUsado) return false
-                    if (!filtro) return true
-                    return n.replace(/\D/g, "").includes(filtro.replace(/\D/g, ""))
+                    return atribuicoes[c.id] === n || !jaUsado
                   })
+                  const numerosFiltrados = numerosDisponiveis.filter((n) => {
+                    if (!termoBusca) return true
+                    return n.replace(/\D/g, "").includes(termoBusca.replace(/\D/g, ""))
+                  })
+                  const estaAberto = buscaAberta === c.id
                   return (
-                    <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3">
+                    <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3 relative">
                       <span className="flex-1 text-sm font-medium truncate">{c.nome}</span>
-                      <select
-                        value={atribuicoes[c.id] || ""}
-                        onChange={(e) => {
-                          setAtribuicoes((prev) => {
-                            const next = { ...prev }
-                            if (e.target.value) {
-                              next[c.id] = e.target.value
-                            } else {
-                              delete next[c.id]
-                            }
-                            return next
-                          })
-                        }}
-                        className="w-48 h-9 rounded-lg border border-input bg-background px-3 py-1 text-xs font-mono"
-                      >
-                        <option value="">— selecione —</option>
-                        {numerosFiltrados.map((n) => (
-                          <option key={n} value={n}>
-                            {formatTel(n)}
-                          </option>
-                        ))}
-                      </select>
-                      {atribuicoes[c.id] && (
-                        <button
-                          onClick={() => {
-                            setAtribuicoes((prev) => {
-                              const next = { ...prev }
-                              delete next[c.id]
-                              return next
-                            })
-                          }}
-                          className="text-xs text-muted-foreground hover:text-red-500"
-                        >
-                          ✕
-                        </button>
+
+                      {atribuicoes[c.id] ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-primary">
+                            {formatTel(atribuicoes[c.id])}
+                          </span>
+                          <button
+                            onClick={() => removerAtribuicao(c.id)}
+                            className="text-xs text-muted-foreground hover:text-red-500"
+                            title="Remover"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <button
+                            onClick={() => abrirBusca(c.id)}
+                            className="w-48 h-9 rounded-lg border border-input bg-background px-3 text-xs text-muted-foreground hover:border-primary/50 transition-colors text-left"
+                          >
+                            {estaAberto ? "Digite o número..." : "— selecione —"}
+                          </button>
+
+                          {estaAberto && (
+                            <>
+                              {/* Backdrop pra fechar ao clicar fora */}
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => { setBuscaAberta(null); setTermoBusca("") }}
+                              />
+                              <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-card border border-border/50 rounded-xl shadow-2xl overflow-hidden">
+                                <div className="p-2 border-b border-border/20">
+                                  <input
+                                    value={termoBusca}
+                                    onChange={(e) => setTermoBusca(e.target.value)}
+                                    placeholder="Digite os dígitos..."
+                                    className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="max-h-48 overflow-y-auto">
+                                  {numerosFiltrados.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground text-center py-4">
+                                      Nenhum número encontrado
+                                    </p>
+                                  ) : (
+                                    numerosFiltrados.map((n) => (
+                                      <button
+                                        key={n}
+                                        onClick={() => selecionarNumero(c.id, n)}
+                                        className="w-full px-3 py-2 text-left text-xs font-mono hover:bg-primary/10 hover:text-primary transition-colors"
+                                      >
+                                        {formatTel(n)}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   )
