@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText, Sparkles, Loader2, Copy } from "lucide-react"
+import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText, Sparkles, Loader2, Copy, QrCode, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -39,6 +39,7 @@ function formatDate(iso: string) {
 export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats }: Props) {
   const siteUrl = "https://catequistas.housecloud.tec.br"
   const [mensagemModal, setMensagemModal] = useState<{ nome: string; texto: string; telefone: string } | null>(null)
+  const [qrModal, setQrModal] = useState(false)
   const [gerandoMsg, setGerandoMsg] = useState<string | null>(null) // catequistaId sendo gerado
   const [copiado, setCopiado] = useState(false)
 
@@ -49,6 +50,17 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
   function abrirWhatsApp() {
     const url = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`
     window.open(url, "_blank")
+  }
+
+  const qrUrl = proximoEncontro
+    ? `${siteUrl}/api/qr?url=${encodeURIComponent(`${siteUrl}/presenca/confirmar?encontro=${proximoEncontro.id}`)}`
+    : ""
+
+  function baixarQR() {
+    const link = document.createElement("a")
+    link.href = qrUrl
+    link.download = `qrcode-encontro-${proximoEncontro?.id}.svg`
+    link.click()
   }
 
   async function handleGerarMensagem(catequistaId: string, nome: string, telefone: string) {
@@ -109,6 +121,40 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
           </motion.div>
         </div>
       )}
+
+      {/* Modal QR Code */}
+      {qrModal && proximoEncontro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border/50 rounded-xl shadow-2xl w-full max-w-xs mx-4 p-6 space-y-4 text-center"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-base">QR do Encontro</h3>
+              <button onClick={() => setQrModal(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+            </div>
+            <div className="bg-white rounded-xl p-4 mx-auto w-fit">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrUrl} alt="QR Code" className="w-48 h-48" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Escaneie para abrir a confirmação de presença
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1 gap-2" onClick={baixarQR}>
+                <Download className="h-4 w-4" />
+                Baixar SVG
+              </Button>
+              <Button size="sm" className="flex-1 gap-2" onClick={() => window.open(`${siteUrl}/presenca/confirmar?encontro=${proximoEncontro.id}`, "_blank")}>
+                <ExternalLink className="h-4 w-4" />
+                Abrir Link
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <header className="h-16 border-b border-border/40 flex items-center px-4 sm:px-6">
         <h1 className="text-lg font-semibold">Painel Admin</h1>
       </header>
@@ -158,10 +204,15 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                         </a>
                       </div>
                     </div>
-                    <Button onClick={abrirWhatsApp} className="w-full md:w-auto md:shrink-0 gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
-                      <MessageCircle className="h-5 w-5" />
-                      Compartilhar no WhatsApp
-                    </Button>
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <Button onClick={abrirWhatsApp} className="flex-1 md:flex-initial gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                        <MessageCircle className="h-5 w-5" />
+                        Compartilhar
+                      </Button>
+                      <Button variant="outline" onClick={() => setQrModal(true)} className="gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                        <QrCode className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

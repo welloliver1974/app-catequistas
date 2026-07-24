@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff, Bell } from "lucide-react"
+import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff, Bell, MessageSquareText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { changeEmail, resetPassword } from "@/actions/auth"
 import { salvarConfigAi } from "@/actions/ai"
+import { salvarMural } from "@/actions/mural"
 import { MODELOS_SUGERIDOS } from "@/lib/modelos-ai"
 import { PushManager } from "@/components/push/push-manager"
 
@@ -44,6 +45,21 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
   const [savingPass, setSavingPass] = useState(false)
   const [msgEmail, setMsgEmail] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [msgPass, setMsgPass] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [muralTexto, setMuralTexto] = useState("")
+  const [savingMural, setSavingMural] = useState(false)
+  const [msgMural, setMsgMural] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  useEffect(() => {
+    import("@/actions/mural").then((m) => m.lerMural().then(setMuralTexto))
+  }, [])
+
+  async function handleSalvarMural() {
+    setSavingMural(true)
+    setMsgMural(null)
+    const res = await salvarMural(muralTexto)
+    setMsgMural(res.success ? { type: "success", text: res.success } : { type: "error", text: res.error || "Erro" })
+    setSavingMural(false)
+  }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault()
@@ -270,6 +286,37 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
                   </motion.p>
                 )}
               </form>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquareText className="h-4 w-4" /> Mural de Avisos
+              </CardTitle>
+              <CardDescription>Escreva um aviso que aparecerá na página dos catequistas.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <textarea
+                value={muralTexto}
+                onChange={(e) => setMuralTexto(e.target.value)}
+                placeholder="Digite o aviso para os catequistas..."
+                rows={4}
+                className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+              />
+              <div className="flex items-center gap-3">
+                <Button type="button" size="sm" className="gap-2" onClick={handleSalvarMural} disabled={savingMural}>
+                  {savingMural ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savingMural ? "Salvando..." : "Salvar Aviso"}
+                </Button>
+                {msgMural && (
+                  <span className={`text-xs flex items-center gap-1 ${msgMural.type === "success" ? "text-primary" : "text-destructive"}`}>
+                    {msgMural.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {msgMural.text}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Os catequistas veem esse aviso na página pública de histórico.</p>
             </CardContent>
           </Card>
 
