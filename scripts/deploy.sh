@@ -18,5 +18,11 @@ npm run build
 echo "==> systemctl restart catequistas"
 sudo systemctl restart catequistas
 
+# Instala rclone se necessario (backup nuvem)
+if ! command -v rclone &>/dev/null; then
+    echo "==> Instalando rclone..."
+    sudo apt-get install -y -qq rclone
+fi
+
 echo "==> Deploy concluído!"
 sudo systemctl status catequistas --no-pager

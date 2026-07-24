@@ -58,13 +58,46 @@ sudo systemctl status catequistas
 sudo journalctl -u catequistas -n 50 --no-pager
 ```
 
-### Backup do banco
+### Backup do banco (local)
 
 Automático via cron (03:00, retenção de 30 dias):
 
 ```bash
 ./scripts/backup.sh
 ```
+
+### Backup na nuvem (Google Drive)
+
+Os backups são sincronizados automaticamente para o Google Drive todos os dias às 03:05.
+
+**Pré-requisito (fazer UMA VEZ):** Configurar o rclone com sua conta Google.
+
+```bash
+# Conecte no servidor
+ssh meu-vps
+
+# Configure o Google Drive (precisa de navegador para autenticar)
+rclone config
+
+# Siga o assistente:
+#   1. "n" (new remote)
+#   2. Nome: "gdrive"
+#   3. Selecione "drive" (Google Drive)
+#   4. Deixe client_id e client_secret em branco (usa padrão)
+#   5. Selecione "1" (Full access)
+#   6. Deixe service_account_file em branco
+#   7. "n" (no advanced config)
+#   8. "y" (yes, auto config) → abre navegador para autenticar
+#   9. "q" (quit)
+```
+
+Após configurar, o backup para a nuvem roda automaticamente. Para testar:
+
+```bash
+./scripts/backup-cloud.sh
+```
+
+> ⚠️ O `rclone config` precisa de um navegador. Se estiver no terminal sem interface, use `rclone config --headless` e siga as instruções.
 
 ### Restart do Cloudflare Tunnel
 
