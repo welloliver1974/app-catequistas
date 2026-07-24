@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Church, CheckCircle2, XCircle, Clock, User, MessageSquareText, BarChart3, CalendarDays, Search, Phone, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
@@ -42,6 +42,15 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
   const [mural] = useState(muralInicial)
   const [mostrarTel, setMostrarTel] = useState(false)
   const [expandido, setExpandido] = useState<string | null>(null)
+  const [telefonesSalvos, setTelefonesSalvos] = useState<Record<string, string>>({})
+
+  // Carrega telefones salvos do localStorage (nunca sai do dispositivo)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("historico_telefones")
+      if (saved) setTelefonesSalvos(JSON.parse(saved))
+    } catch { /* ignora */ }
+  }, [])
 
   async function handleSelectCatequista(id: string) {
     setSelectedId(id)
@@ -49,12 +58,40 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
     setError(null)
     setStats(null)
     setHistorico([])
+    setExpandido(null)
     if (!id) {
       setEtapa("selecao")
       return
     }
     const c = catequistas.find((c) => c.id === id)
     setSelectedNome(c?.nome || "")
+
+    // Verificação automática se já tem telefone salvo
+    const savedTel = telefonesSalvos[id]
+    if (savedTel) {
+      setTelefone(savedTel)
+      setLoading(true)
+      const res = await verificarTelefone(id, savedTel)
+      if (res.valido) {
+        const result = await getHistoricoCatequista(id, savedTel)
+        if (!("error" in result)) {
+          setStats(result.stats)
+          setHistorico(result.historico)
+          setEtapa("historico")
+          setLoading(false)
+          return
+        }
+      }
+      // Se falhou, limpa o telefone salvo e pede pra digitar
+      const updated = { ...telefonesSalvos }
+      delete updated[id]
+      setTelefonesSalvos(updated)
+      localStorage.setItem("historico_telefones", JSON.stringify(updated))
+      setTelefone("")
+      setError("Telefone salvo não é mais válido. Digite novamente.")
+      setLoading(false)
+    }
+
     setEtapa("telefone")
   }
 
@@ -80,6 +117,11 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
     }
     setStats(result.stats)
     setHistorico(result.historico)
+    // Salva telefone no localStorage pra não precisar digitar de novo
+    const telDigits = telefone.replace(/\D/g, "")
+    const saved = { ...telefonesSalvos, [selectedId]: telDigits }
+    setTelefonesSalvos(saved)
+    localStorage.setItem("historico_telefones", JSON.stringify(saved))
     setEtapa("historico")
     setLoading(false)
   }
@@ -215,12 +257,26 @@ export function HistoricoClient({ catequistas, muralInicial }: Props) {
         {etapa === "historico" && stats && (
           <>
             {/* Botão voltar */}
-            <button
-              onClick={handleVoltar}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ← {selectedNome} (trocar)
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleVoltar}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← {selectedNome} (trocar)
+              </button>
+              <button
+                onClick={() => {
+                  const updated = { ...telefonesSalvos }
+                  delete updated[selectedId]
+                  setTelefonesSalvos(updated)
+                  localStorage.setItem("historico_telefones", JSON.stringify(updated))
+                  handleVoltar()
+                }}
+                className="text-xs text-muted-foreground/60 hover:text-red-500 transition-colors"
+              >
+                Esquecer telefone
+              </button>
+            </div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
