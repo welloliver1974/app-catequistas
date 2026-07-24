@@ -10,7 +10,34 @@ export async function listarCatequistasAtivos() {
   })
 }
 
-export async function getHistoricoCatequista(catequistaId: string) {
+export async function verificarTelefone(catequistaId: string, telefone: string) {
+  const catequista = await prisma.catequista.findUnique({
+    where: { id: catequistaId },
+    select: { telefone: true, nome: true },
+  })
+
+  if (!catequista) return { valido: false, error: "Catequista não encontrado." }
+
+  // Remove tudo que não é número pra comparar
+  const telDigitado = telefone.replace(/\D/g, "")
+  const telCadastrado = (catequista.telefone || "").replace(/\D/g, "")
+
+  if (!telCadastrado) {
+    return { valido: false, error: `${catequista.nome} não possui telefone cadastrado. Solicite ao administrador.` }
+  }
+
+  if (telDigitado !== telCadastrado) {
+    return { valido: false, error: "Telefone incorreto. Tente novamente." }
+  }
+
+  return { valido: true, nome: catequista.nome }
+}
+
+export async function getHistoricoCatequista(catequistaId: string, telefone: string) {
+  // Verifica telefone novamente (segurança)
+  const verificado = await verificarTelefone(catequistaId, telefone)
+  if (!verificado.valido) return { error: "Acesso negado." }
+
   const presencas = await prisma.registroPresenca.findMany({
     where: { catequistaId },
     include: {
