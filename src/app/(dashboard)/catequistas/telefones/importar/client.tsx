@@ -55,18 +55,6 @@ export function ImportarWhatsAppClient() {
     setLoading(false)
   }
 
-  function atribuir(catequistaId: string, numero: string) {
-    setAtribuicoes((prev) => {
-      const next = { ...prev }
-      if (next[catequistaId] === numero) {
-        delete next[catequistaId]
-      } else {
-        next[catequistaId] = numero
-      }
-      return next
-    })
-  }
-
   async function handleSalvar() {
     setSaving(true)
     const dados = Object.entries(atribuicoes).map(([id, tel]) => ({
@@ -171,7 +159,7 @@ export function ImportarWhatsAppClient() {
                 Atribuir números aos catequistas
               </CardTitle>
               <CardDescription>
-                Clique no número ao lado do nome para associar.
+                Para cada catequista, selecione o número correspondente no dropdown.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -179,24 +167,48 @@ export function ImportarWhatsAppClient() {
                 {semTelefone.map((c) => (
                   <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3">
                     <span className="flex-1 text-sm font-medium truncate">{c.nome}</span>
-                    <div className="flex gap-1.5 flex-wrap justify-end">
-                      {numeros.map((n) => {
-                        const ativo = atribuicoes[c.id] === n
-                        return (
-                          <button
-                            key={n}
-                            onClick={() => atribuir(c.id, n)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-mono border transition-all ${
-                              ativo
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-muted/30 text-muted-foreground border-border/50 hover:border-primary/30"
-                            }`}
-                          >
+                    <select
+                      value={atribuicoes[c.id] || ""}
+                      onChange={(e) => {
+                        setAtribuicoes((prev) => {
+                          const next = { ...prev }
+                          if (e.target.value) {
+                            next[c.id] = e.target.value
+                          } else {
+                            delete next[c.id]
+                          }
+                          return next
+                        })
+                      }}
+                      className="w-48 h-9 rounded-lg border border-input bg-background px-3 py-1 text-xs font-mono"
+                    >
+                      <option value="">— selecione —</option>
+                      {numeros
+                        .filter((n) => {
+                          // Mostra números que já foram atribuídos (inclusive este) ou estão livres
+                          const jaUsado = Object.values(atribuicoes).includes(n)
+                          return atribuicoes[c.id] === n || !jaUsado
+                        })
+                        .map((n) => (
+                          <option key={n} value={n}>
                             {n.replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3")}
-                          </button>
-                        )
-                      })}
-                    </div>
+                          </option>
+                        ))}
+                    </select>
+                    {atribuicoes[c.id] && (
+                      <button
+                        onClick={() => {
+                          setAtribuicoes((prev) => {
+                            const next = { ...prev }
+                            delete next[c.id]
+                            return next
+                          })
+                        }}
+                        className="text-xs text-muted-foreground hover:text-red-500"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
