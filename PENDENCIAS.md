@@ -41,6 +41,12 @@
 - [x] **Tema claro/escuro** — Alternância entre dark e light com botão no menu, salva preferência no localStorage
 - [x] **Backup nuvem (Google Drive)** — Backup automático do banco via rclone, cron diário 03:05
 - [x] **Notificação Push** — Recebe push no celular quando catequista confirma presença ou justifica ausência
+- [x] **QR code** para encontros — botão com modal, download SVG, abrir link
+- [x] **Página pública de Histórico** (`/presenca/historico`) — seleção + verificação por telefone + stats + lista cronológica
+- [x] **Resumo da IA no histórico** — catequista expande e vê o conteúdo do encontro (se o admin gerou resumo)
+- [x] **Mural de avisos** — avisos visíveis no histórico público, editável pelo admin em Configurações
+- [x] **Importar WhatsApp** — upload .txt, extração de números, combobox com busca para atribuir aos catequistas
+- [x] **Telefones sem prefixo 55** — todos os formulários limpam o código do país automaticamente
 
 ## 🔲 Pendente
 
@@ -48,8 +54,6 @@
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
-| **QR code p/ confirmação de presença** | ~1h | Pendente |
-| **Aviso inteligente no WhatsApp** (sugestão baseada no histórico) | ~1h | ✅ Concluído |
 | **Análise de temas recorrentes** (IA detecta padrões nos resumos) | ~1h | Pendente |
 
 ---

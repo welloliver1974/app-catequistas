@@ -29,7 +29,8 @@
 - Busca por nome na tabela
 - Vínculo com turmas (leitura)
 - Vínculo com usuário do sistema
-- **Telefones** (`/catequistas/telefones`): página para cadastrar telefone em lote — lista todos sem telefone com input ao lado de cada nome
+- **Telefones** (`/catequistas/telefones`): página para cadastrar telefone em lote — lista todos sem telefone com input ao lado de cada nome. **Prefixo 55 é removido automaticamente** ao salvar.
+- **Importar WhatsApp** (`/catequistas/telefones/importar`): extrai números de exportação .txt do grupo, atribui com busca por catequista
 
 ### Encontros
 - CRUD completo (data, tema, local)
@@ -96,6 +97,31 @@
 - Navegação entre meses
 - Layout com gap-px para visual limpo
 - Lista completa de encontros abaixo
+
+### QR Code para Encontros
+- Geração de QR code SVG via `/api/qr?url=...` (biblioteca `qrcode`)
+- Botão com modal na tela de presença (`/presenca`) para copiar/compartilhar
+- Download do QR code como SVG
+- Botão para abrir o link diretamente
+
+### Histórico Público do Catequista
+- Página pública em `/presenca/historico` — sem login
+- Seleção do nome + verificação por telefone (privacidade)
+- Cards com estatísticas (encontros, presenças, frequência)
+- Lista cronológica de encontros com status presença/ausência
+- **Resumo do encontro**: se o admin gerou resumo pela IA, o catequista pode expandir e ver o conteúdo (Assunto Principal, Pontos Abordados, Reflexão, Avisos)
+
+### Mural de Avisos
+- Texto de avisos visível na página pública de histórico
+- Editor na página de Configurações (admin)
+- Armazenado no modelo `Configuracao` (chave `mural_texto`)
+
+### Importar WhatsApp
+- Página em `/catequistas/telefones/importar`
+- Upload de arquivo `.txt` exportado do grupo do WhatsApp
+- Extração automática de números brasileiros (regex `\+?55...`)
+- Searchable combobox para atribuir números aos catequistas sem telefone
+- Salvamento em lote no banco
 
 ### Mensagens para Grupo WhatsApp
 - Página dedicada em `/mensagens` com 4 tipos de mensagem geradas por IA:
