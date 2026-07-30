@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { changeEmail, resetPassword } from "@/actions/auth"
 import { salvarConfigAi } from "@/actions/ai"
 import { salvarMural } from "@/actions/mural"
+import { salvarWebhookUrl, getInfoSincronizacao, sincronizarPlanilhaDiocesana } from "@/actions/sincronizar"
 import { MODELOS_SUGERIDOS } from "@/lib/modelos-ai"
 import { PushManager } from "@/components/push/push-manager"
 
@@ -49,8 +50,22 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
   const [savingMural, setSavingMural] = useState(false)
   const [msgMural, setMsgMural] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
+  // Sincronização Diocesana
+  const [diocesanUrl, setDiocesanUrl] = useState("")
+  const [diocesanLastSync, setDiocesanLastSync] = useState<string | null>(null)
+  const [savingDiocesan, setSavingDiocesan] = useState(false)
+  const [syncingDiocesan, setSyncingDiocesan] = useState(false)
+  const [msgDiocesan, setMsgDiocesan] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
   useEffect(() => {
     import("@/actions/mural").then((m) => m.lerMural().then(setMuralTexto))
+  }, [])
+
+  useEffect(() => {
+    getInfoSincronizacao().then((info) => {
+      setDiocesanUrl(info.webhookUrl)
+      setDiocesanLastSync(info.lastSync)
+    })
   }, [])
 
   async function handleSalvarMural() {
@@ -59,6 +74,32 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
     const res = await salvarMural(muralTexto)
     setMsgMural(res.success ? { type: "success", text: res.success } : { type: "error", text: res.error || "Erro" })
     setSavingMural(false)
+  }
+
+  async function handleSalvarDiocesanUrl() {
+    setSavingDiocesan(true)
+    setMsgDiocesan(null)
+    const res = await salvarWebhookUrl(diocesanUrl)
+    if (res.error) {
+      setMsgDiocesan({ type: "error", text: res.error })
+    } else {
+      setMsgDiocesan({ type: "success", text: res.success || "URL salva!" })
+    }
+    setSavingDiocesan(false)
+  }
+
+  async function handleSincronizar() {
+    setSyncingDiocesan(true)
+    setMsgDiocesan(null)
+    const res = await sincronizarPlanilhaDiocesana()
+    if (res.error) {
+      setMsgDiocesan({ type: "error", text: res.error })
+    } else {
+      setMsgDiocesan({ type: "success", text: res.success || "Sincronizado!" })
+      const info = await getInfoSincronizacao()
+      setDiocesanLastSync(info.lastSync)
+    }
+    setSyncingDiocesan(false)
   }
 
   async function handleEmail(e: React.FormEvent) {
@@ -317,6 +358,86 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">Os catequistas veem esse aviso na página pública de histórico.</p>
+            </CardContent>
+          </Card>
+
+          {/* Sincronização Diocesana */}
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Download className="h-4 w-4" /> Sincronização Diocesana
+              </CardTitle>
+              <CardDescription>
+                Envie os dados de presença para a planilha da Escola Diocesana de Santo André.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="diocesanUrl">URL do Webhook</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="diocesanUrl"
+                    type="url"
+                    value={diocesanUrl}
+                    onChange={(e) => setDiocesanUrl(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="gap-2 shrink-0"
+                    onClick={handleSalvarDiocesanUrl}
+                    disabled={savingDiocesan || !diocesanUrl.trim()}
+                  >
+                    {savingDiocesan ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</>
+                    ) : (
+                      <><Save className="h-4 w-4" /> Salvar</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleSincronizar}
+                  disabled={syncingDiocesan || !diocesanUrl.trim()}
+                >
+                  {syncingDiocesan ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Sincronizando...</>
+                  ) : (
+                    <><RotateCcw className="h-4 w-4" /> Sincronizar Agora</>
+                  )}
+                </Button>
+
+                {diocesanLastSync && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    Última sincronização: {new Date(diocesanLastSync).toLocaleString("pt-BR")}
+                  </span>
+                )}
+              </div>
+
+              {!diocesanUrl.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Configure a URL do webhook para ativar a sincronização.
+                </p>
+              )}
+
+              {msgDiocesan && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`text-sm flex items-center gap-1 ${msgDiocesan.type === "success" ? "text-primary" : "text-destructive"}`}
+                >
+                  {msgDiocesan.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                  {msgDiocesan.text}
+                </motion.p>
+              )}
             </CardContent>
           </Card>
 
