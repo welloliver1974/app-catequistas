@@ -19,6 +19,7 @@ interface Encontro {
   turma: string
   totalPresencas: number
   resumo: string | null
+  numeroEncontro: number | null
 }
 
 function formatDate(iso: string) {
@@ -92,6 +93,7 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/50">
+                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nº</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Data</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Tema</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground hidden sm:table-cell">Local</th>
@@ -109,6 +111,7 @@ export function EncontrosClient({ encontros }: { encontros: Encontro[] }) {
                         transition={{ delay: i * 0.03 }}
                         className="border-b border-border/20 hover:bg-muted/30 transition-colors"
                       >
+                        <td className="py-3 px-2 text-muted-foreground text-xs">{e.numeroEncontro ?? "—"}</td>
                         <td className="py-3 px-2">{formatDate(e.data)}</td>
                         <td className="py-3 px-2 font-medium">{e.tema}</td>
                         <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell">{e.local || "—"}</td>
@@ -428,6 +431,12 @@ function EncontroForm({ encontro, onClose }: { encontro: Encontro | null; onClos
           <div className="space-y-2">
             <Label htmlFor="tema">Tema</Label>
             <Input id="tema" name="tema" placeholder="Ex: Encontro 5" defaultValue={encontro?.tema ?? ""} required />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="numeroEncontro">Nº do Encontro (1-15) <span className="text-muted-foreground font-normal">— para planilha diocesana</span></Label>
+            <Input id="numeroEncontro" name="numeroEncontro" type="number" min="1" max="15" placeholder="Ex: 3" defaultValue={encontro?.numeroEncontro ?? ""} />
+            <p className="text-xs text-muted-foreground">Número sequencial do encontro para posicionar corretamente na planilha da escola.</p>
           </div>
 
           <div className="space-y-2">

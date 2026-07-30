@@ -21,6 +21,7 @@ export default async function EncontrosPage() {
     turma: e.turma.nome,
     totalPresencas: e._count.presencas,
     resumo: e.resumo,
+    numeroEncontro: e.numeroEncontro,
   }))
 
   return <EncontrosClient encontros={encontrosData} />

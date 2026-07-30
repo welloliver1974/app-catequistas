@@ -71,21 +71,13 @@ function doPost(e) {
 
     // ─── Escreve datas nos cabeçalhos (linha 3, colunas B-O) ──────────────
     const encontros = data.encontros || [];
-    for (let i = 0; i < Math.min(encontros.length, MAX_ENCONTROS); i++) {
-      const coluna = PRESENCA_START_COL + i;
+    for (let i = 0; i < encontros.length; i++) {
+      // Usa o numero do encontro para determinar a coluna (B = col 2, C = col 3, etc.)
+      const coluna = PRESENCA_START_COL + (encontros[i].numero - 1);
       const header = encontros[i].data
-        ? `${i + 1}º encontro — ${encontros[i].data}`
-        : `${i + 1}º encontro`;
+        ? `${encontros[i].numero}º encontro — ${encontros[i].data}`
+        : `${encontros[i].numero}º encontro`;
       sheet.getRange(HEADER_ROW, coluna).setValue(header);
-    }
-
-    // Se houver menos encontros que 15, limpa as colunas restantes
-    for (let i = encontros.length; i < MAX_ENCONTROS; i++) {
-      const coluna = PRESENCA_START_COL + i;
-      const currentValue = sheet.getRange(HEADER_ROW, coluna).getValue();
-      if (currentValue) {
-        sheet.getRange(HEADER_ROW, coluna).setValue("");
-      }
     }
 
     // ─── Escreve catequistas e presenças ──────────────────────────────────
@@ -96,11 +88,12 @@ function doPost(e) {
       // Nome do catequista (coluna A)
       sheet.getRange(linha, NOME_COL).setValue(catequista.nome);
 
-      // Presenças (colunas B-O)
+      // Presenças: cada posição j corresponde ao encontro j (que tem seu numero)
       const presencas = catequista.presencas || [];
-      for (let j = 0; j < Math.min(presencas.length, MAX_ENCONTROS); j++) {
+      for (let j = 0; j < presencas.length; j++) {
         if (presencas[j]) {
-          sheet.getRange(linha, PRESENCA_START_COL + j).setValue(presencas[j]);
+          const coluna = PRESENCA_START_COL + (encontros[j].numero - 1);
+          sheet.getRange(linha, coluna).setValue(presencas[j]);
         }
       }
     }

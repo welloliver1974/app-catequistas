@@ -22,6 +22,8 @@ export async function criarEncontro(formData: FormData) {
   const tema = formData.get("tema") as string
   const local = formData.get("local") as string
   const linkPdf = formData.get("linkPdf") as string
+  const numeroRaw = formData.get("numeroEncontro") as string
+  const numeroEncontro = numeroRaw ? parseInt(numeroRaw, 10) : null
 
   const pdfPath = await salvarUploadPdf(formData)
 
@@ -31,6 +33,7 @@ export async function criarEncontro(formData: FormData) {
       tema,
       local: local || null,
       linkPdf: pdfPath || linkPdf || null,
+      numeroEncontro,
       turmaId: (await prisma.turma.findFirst())?.id ?? "",
     },
   })
@@ -43,6 +46,8 @@ export async function atualizarEncontro(id: string, formData: FormData) {
   const tema = formData.get("tema") as string
   const local = formData.get("local") as string
   const linkPdf = formData.get("linkPdf") as string
+  const numeroRaw = formData.get("numeroEncontro") as string
+  const numeroEncontro = numeroRaw ? parseInt(numeroRaw, 10) : null
 
   const pdfPath = await salvarUploadPdf(formData)
 
@@ -53,6 +58,7 @@ export async function atualizarEncontro(id: string, formData: FormData) {
       tema,
       local: local || null,
       linkPdf: pdfPath || linkPdf || null,
+      numeroEncontro,
     },
   })
 

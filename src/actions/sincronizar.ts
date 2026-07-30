@@ -4,14 +4,13 @@ import { prisma } from "@/lib/prisma"
 import { getConfig, setConfig } from "./config"
 
 const TOKEN = "catequistas-sync-2026"
-const MAX_ENCONTROS = 15
 
 /**
  * Sincroniza os dados de presença do app com a planilha da Escola Diocesana.
  *
  * Fluxo:
  * 1. Lê a URL do webhook salva nas configurações
- * 2. Busca catequistas ativos e encontros (ordenados por data)
+ * 2. Busca catequistas ativos e encontros (que têm numeroEncontro definido)
  * 3. Monta matriz de presença (catequista × encontro → "P" | "A" | "")
  * 4. Envia via POST para o Google Apps Script
  * 5. Salva timestamp da última sincronização
@@ -30,18 +29,18 @@ export async function sincronizarPlanilhaDiocesana() {
       select: { id: true, nome: true },
     })
 
+    // Busca apenas encontros que têm numeroEncontro definido, ordenados pelo número
     const encontros = await prisma.encontro.findMany({
-      orderBy: { data: "asc" },
-      take: MAX_ENCONTROS,
-      select: { id: true, tema: true, data: true },
+      where: { numeroEncontro: { not: null } },
+      orderBy: { numeroEncontro: "asc" },
+      select: { id: true, tema: true, data: true, numeroEncontro: true },
     })
 
     if (encontros.length === 0) {
-      return { error: "Nenhum encontro cadastrado para sincronizar." }
+      return { error: "Nenhum encontro com número definido. Edite os encontros e defina o Nº do Encontro (1-15) antes de sincronizar." }
     }
 
     // ─── Monta lookup de presenças ────────────────────────────────────────
-    // Chave: `${catequistaId}_${encontroId}` → Valor: true (presente) | false (ausente)
     const presencas = await prisma.registroPresenca.findMany({
       where: { encontroId: { in: encontros.map((e) => e.id) } },
       select: { catequistaId: true, encontroId: true, presente: true },
@@ -55,8 +54,8 @@ export async function sincronizarPlanilhaDiocesana() {
     // ─── Monta payload ────────────────────────────────────────────────────
     const payload = {
       token: TOKEN,
-      encontros: encontros.map((e, i) => ({
-        numero: i + 1,
+      encontros: encontros.map((e) => ({
+        numero: e.numeroEncontro!, // Não-nulo pela condição acima
         data: e.data.toLocaleDateString("pt-BR"),
         tema: e.tema,
       })),
