@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const rotasProtegidas = ["/dashboard", "/encontros", "/catequistas", "/turmas", "/calendario", "/notificacoes", "/importar", "/relatorios", "/configuracoes", "/presenca", "/mensagens", "/assistente"]
-const rotasPublicas = ["/login", "/recuperar-senha", "/presenca/confirmar"]
+const rotasPublicas = ["/login", "/recuperar-senha", "/presenca/confirmar", "/presenca/historico"]
 
 export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
