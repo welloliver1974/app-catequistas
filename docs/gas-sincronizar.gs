@@ -32,6 +32,9 @@ const MAX_ENCONTROS = 15;  // Máximo de colunas de presença (B a O)
 const NOME_COL = 1;        // Coluna A: nomes dos catequistas
 const PRESENCA_START_COL = 2; // Coluna B: primeiro encontro
 
+// ─── Planilha alvo (ID extraído da URL do Google Sheets) ─────────────────────
+const SHEET_ID = "1BzbeBttIBfse4ONFLjOsMMoW7Q__eFDS";
+
 /**
  * Recebe o POST do App Catequistas e preenche a planilha.
  * Espera um JSON no corpo:
@@ -60,7 +63,7 @@ function doPost(e) {
       return jsonResponse({ error: "Nenhum catequista para sincronizar." }, 400);
     }
 
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
 
     // ─── Limpa dados antigos (preserva linhas 1-3: título e cabeçalhos) ───
     const ultimaLinha = sheet.getLastRow();
