@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi, gerarMensagemGrupo as gerarMensagemGrupoAi } from "@/lib/ai"
+import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi, analisarTemas as analisarTemasAi, gerarMensagemGrupo as gerarMensagemGrupoAi } from "@/lib/ai"
 import { revalidatePath } from "next/cache"
 
 export async function salvarConfigAi(formData: FormData) {
@@ -305,6 +305,37 @@ export async function analisarFaltasRecorrentes() {
   }
 }
 
+// ─── Análise de Temas Recorrentes ────────────────────────────────────────────
+export async function analisarTemasRecorrentes() {
+  try {
+    const encontros = await prisma.encontro.findMany({
+      where: { resumo: { not: "" } },
+      orderBy: { data: "desc" },
+      take: 60,
+      select: { id: true, tema: true, data: true, numeroEncontro: true, resumo: true },
+    })
+
+    // Filtra resumos vazios/só-espaços e coloca em ordem cronológica
+    const comResumo = encontros.reverse().filter((e) => e.resumo?.trim())
+
+    if (comResumo.length === 0) {
+      return { error: "Nenhum resumo de encontro disponível ainda. Gere um resumo ou conteúdo nos encontros antes de analisar os temas recorrentes." }
+    }
+
+    const analise = await analisarTemasAi({
+      encontros: comResumo.map((e) => ({
+        numeroEncontro: e.numeroEncontro,
+        data: e.data.toLocaleDateString("pt-BR"),
+        tema: e.tema,
+        resumo: e.resumo ?? "",
+      })),
+    })
+    return { success: true, analise }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao analisar temas." }
+  }
+}
+
 // ─── Mensagem para Grupo WhatsApp ───────────────────────────────────────────
 export async function gerarMensagemGrupo(params: {
   tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
@@ -331,7 +362,7 @@ export async function gerarMensagemGrupo(params: {
         data: encontro.data.toLocaleDateString("pt-BR"),
         local: encontro.local || encontro.turma.nome,
         turma: encontro.turma.nome,
-        linkPresenca: `${baseUrl}/presenca/confirmar`,
+        linkPresenca: `${baseUrl}/presenca/confirmar?encontro=${encontro.id}`,
       })
       return { success: true, mensagem, encontro: encontro.tema }
     }
@@ -362,7 +393,7 @@ export async function gerarMensagemGrupo(params: {
         totalCatequistas,
         presentes,
         ausentes,
-        linkPresenca: `${baseUrl}/presenca/confirmar`,
+        linkPresenca: `${baseUrl}/presenca/confirmar?encontro=${encontro.id}`,
       })
       return { success: true, mensagem, encontro: encontro.tema }
     }

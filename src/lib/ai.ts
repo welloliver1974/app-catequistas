@@ -247,6 +247,39 @@ Use linguagem pastoral e não punitiva. Responda APENAS com a análise em markdo
   return await sendToAi(prompt, config, 0.5)
 }
 
+export async function analisarTemas(dados: {
+  encontros: { numeroEncontro: number | null; data: string; tema: string; resumo: string }[]
+}): Promise<string> {
+  const config = await getAiConfig()
+  if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
+
+  const lista = dados.encontros
+    .map((e) =>
+      `- ${e.numeroEncontro ? `Encontro Nº ${e.numeroEncontro}` : "Encontro"} (${e.data}): "${e.tema}"\n  Resumo: ${e.resumo}`
+    )
+    .join("\n\n")
+
+  const prompt = `Você é um coordenador de catequese experiente e analista pastoral. Analise os ${dados.encontros.length} encontros abaixo para identificar temas recorrentes.
+
+ENCONTROS COM RESUMO:
+${lista}
+
+Forneça uma análise concisa em markdown com:
+
+## 🔍 Temas Recorrentes
+(Agrupe os temas que mais se repetem, citando os encontros relacionados)
+
+## 📈 Evolução nos Encontros
+(Como os temas evoluíram ao longo do tempo — sequência pedagógica, progressão, ciclos)
+
+## 💡 Sugestões para os Próximos Encontros
+(3-4 sugestões que complementam o que já foi trabalhado e evitam repetição excessiva)
+
+Use linguagem pastoral e prática. Responda APENAS com a análise em markdown.`
+
+  return await sendToAi(prompt, config, 0.5, 2, 2048)
+}
+
 export async function gerarMensagemGrupo(dados: {
   tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
   tema?: string
@@ -371,7 +404,7 @@ Responda APENAS com a versão melhorada da mensagem, pronta para copiar e colar 
   }
 }
 
-async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, maxRetries = 2): Promise<string> {
+async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, maxRetries = 2, maxTokens = 1024): Promise<string> {
   const url = config.provider === "groq" ? GROQ_URL : OPENROUTER_URL
   const model = config.model
 
@@ -388,7 +421,7 @@ async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, max
           model,
           messages: [{ role: "user", content: prompt }],
           temperature,
-          max_tokens: 1024,
+          max_tokens: maxTokens,
         }),
       })
 

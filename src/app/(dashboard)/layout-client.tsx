@@ -5,7 +5,7 @@ import { ViewTransition } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
-import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Download, Settings, LogOut, Bot, Menu, X, Phone, MessageCircle, Sun, Moon, Upload } from "lucide-react"
+import { Church, Users, ClipboardCheck, BarChart3, CalendarDays, Bell, BookOpen, Database, FileText, Lightbulb, Download, Settings, LogOut, Bot, Menu, X, Phone, MessageCircle, Sun, Moon, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/actions/auth"
 import { useTheme } from "@/lib/theme-provider"
@@ -25,6 +25,7 @@ const navItems = [
   { icon: BookOpen, label: "Turmas", href: "/turmas" },
   { icon: FileText, label: "Frequência", href: "/relatorios/frequencia" },
   { icon: FileText, label: "Relatório IA", href: "/relatorios/narrativo" },
+  { icon: Lightbulb, label: "Temas Recorrentes", href: "/relatorios/temas" },
   { icon: Download, label: "Exportar", href: "/relatorios/exportar" },
   { icon: ClipboardCheck, label: "Painel Admin", href: "/presenca" },
   { icon: MessageCircle, label: "Mensagens", href: "/mensagens" },

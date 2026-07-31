@@ -26,6 +26,7 @@ interface Props {
     linkPdf: string | null
     turma: { nome: string }
   } | null
+  viaParametro?: boolean
 }
 
 function formatDate(date: Date) {
@@ -36,7 +37,7 @@ function formatDate(date: Date) {
   })
 }
 
-export function PresencaPublicaClient({ catequistas, encontro }: Props) {
+export function PresencaPublicaClient({ catequistas, encontro, viaParametro = false }: Props) {
   const [catequistaId, setCatequistaId] = useState("")
   const [loading, setLoading] = useState(false)
   const [respondido, setRespondido] = useState(false)
@@ -103,7 +104,9 @@ export function PresencaPublicaClient({ catequistas, encontro }: Props) {
         <div className="text-center mb-6">
           <Church className="h-10 w-10 text-primary mx-auto mb-2" />
           <h1 className="text-2xl font-bold">Confirmação de Presença</h1>
-          <p className="text-sm text-muted-foreground">Registre sua presença no próximo encontro</p>
+          <p className="text-sm text-muted-foreground">
+            {viaParametro ? "Registre sua presença neste encontro" : "Registre sua presença no próximo encontro"}
+          </p>
         </div>
 
         <Card className="border-primary/20 bg-card/80 backdrop-blur-sm">

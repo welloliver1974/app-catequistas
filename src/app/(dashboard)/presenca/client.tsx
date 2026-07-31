@@ -89,13 +89,12 @@ export function PresencaAdminClient({ user, encontro, encontroSelecionadoId, enc
     : ""
 
   const mostrarBadgeSemFuturo = !!encontro && !encontro.selecionado && encontro.dataPassada
-  const esconderCompartilhamento = !!encontro && encontro.selecionado && encontro.dataPassada
   const tituloWhatsApp = encontro && (encontro.selecionado || encontro.dataPassada)
     ? "Encontro de Catequese"
     : "Proximo Encontro de Catequese"
 
   const mensagemWhatsApp = encontro
-    ? `*${tituloWhatsApp}*\nData: ${formatDataCurta(encontro.data)}\nLocal: ${encontro.local || encontro.turma}\nTema: ${encontro.tema}\n\nConfirme sua presenca:\n${siteUrl}/presenca/confirmar`
+    ? `*${tituloWhatsApp}*\nData: ${formatDataCurta(encontro.data)}\nLocal: ${encontro.local || encontro.turma}\nTema: ${encontro.tema}\n\nConfirme sua presenca:\n${siteUrl}/presenca/confirmar?encontro=${encontro.id}`
     : ""
 
   function handleSelecionarEncontro(value: string) {
@@ -291,29 +290,25 @@ export function PresencaAdminClient({ user, encontro, encontroSelecionadoId, enc
                             Material (PDF)
                           </a>
                         )}
-                        {!esconderCompartilhamento && (
-                          <a
-                            href={`${siteUrl}/presenca/confirmar`}
-                            target="_blank"
-                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Link público de presença
-                          </a>
-                        )}
+                        <a
+                          href={`${siteUrl}/presenca/confirmar?encontro=${encontro.id}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Link público de presença
+                        </a>
                       </div>
                     </div>
-                    {!esconderCompartilhamento && (
-                      <div className="flex gap-2 w-full md:w-auto">
-                        <Button onClick={abrirWhatsApp} className="flex-1 md:flex-initial gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
-                          <MessageCircle className="h-5 w-5" />
-                          Compartilhar
-                        </Button>
-                        <Button variant="outline" onClick={() => setQrModal(true)} className="gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
-                          <QrCode className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <Button onClick={abrirWhatsApp} className="flex-1 md:flex-initial gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                        <MessageCircle className="h-5 w-5" />
+                        Compartilhar
+                      </Button>
+                      <Button variant="outline" onClick={() => setQrModal(true)} className="gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                        <QrCode className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
