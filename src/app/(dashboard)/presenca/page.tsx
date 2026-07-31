@@ -24,7 +24,8 @@ export default async function PresencaPage({
   // Todos os encontros em ordem cronológica para o admin escolher qualquer
   // encontro (inclusive passados) e lançar a frequência retroativamente.
   const encontros = await prisma.encontro.findMany({
-    orderBy: { data: "asc" },
+    // Mesma ordenação da lista de encontros: pelo Nº, sem número vai pro fim.
+    orderBy: [{ numeroEncontro: { sort: "asc", nulls: "last" } }, { data: "asc" }],
     select: { id: true, tema: true, data: true, numeroEncontro: true },
   })
 

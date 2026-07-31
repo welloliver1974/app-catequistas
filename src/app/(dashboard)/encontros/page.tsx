@@ -5,7 +5,9 @@ export const dynamic = "force-dynamic"
 
 export default async function EncontrosPage() {
   const encontros = await prisma.encontro.findMany({
-    orderBy: { data: "desc" },
+    // Ordena pelo Nº do encontro (Encontro 1, 2, 3...) — as datas podem não
+    // seguir a ordem dos números em lançamentos retroativos. Sem número vai pro fim.
+    orderBy: [{ numeroEncontro: { sort: "asc", nulls: "last" } }, { data: "asc" }],
     include: {
       turma: { select: { nome: true } },
       _count: { select: { presencas: true } },
