@@ -133,7 +133,7 @@ async function main() {
           nome: c.nome,
           email: c.email,
           telefone: c.telefone,
-          dataEntrada: new Date("2026-06-13"),
+          dataEntrada: new Date("2026-06-13T12:00:00Z"),
           turmas: {
             create: [{ turmaId: turma1.id }],
           },
@@ -143,7 +143,11 @@ async function main() {
   )
 
   console.log("Criando encontros...")
-  const primeiroDomingo = new Date("2026-06-14")
+  // IMPORTANTE: datas de encontro SEMPRE em meio-dia UTC (T12:00:00Z).
+  // Meia-noite UTC (new Date("AAAA-MM-DD")) vira 21h do dia anterior em
+  // Brasília (UTC-3) e desloca o dia exibido. Mesma convenção do
+  // parseDateInput em src/actions/encontros.ts.
+  const primeiroDomingo = new Date("2026-06-14T12:00:00Z")
   const encontrosData = Array.from({ length: 5 }, (_, i) => {
     const data = new Date(primeiroDomingo)
     data.setDate(data.getDate() + i * 7)
