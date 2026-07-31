@@ -47,6 +47,13 @@
 - [x] **Mural de avisos** — avisos visíveis no histórico público, editável pelo admin em Configurações
 - [x] **Importar WhatsApp** — upload .txt, extração de números, combobox com busca para atribuir aos catequistas
 - [x] **Telefones sem prefixo 55** — todos os formulários limpam o código do país automaticamente
+- [x] **Sincronização Diocesana** — um clique envia presenças para a planilha da Escola Diocesana (Apps Script + `numeroEncontro`)
+- [x] **Seletor de encontro + marcação retroativa** — painel admin escolhe qualquer encontro (inclusive passados) e marca Presente/Ausente/Pendente
+- [x] **Encontros ordenados por número** — lista e seletor usam o Nº do encontro (1, 2, 3...), não a data
+- [x] **Link público honra `?encontro=`** — QR/WhatsApp/link caem no encontro exato, à prova de fuso horário
+- [x] **Proteção de rotas** — `/mensagens` e `/assistente` pedem login; `/presenca/historico` volta a ser público
+- [x] **Análise de temas recorrentes** — IA mapeia os temas dos resumos e sugere os próximos encontros
+- [x] **Correção de datas (fuso)** — encontros gravados em meio-dia UTC (`T12:00:00Z`) para não deslocar o dia no fuso Brasília
 
 ## 🔲 Pendente
 
@@ -54,7 +61,6 @@
 |---|---|---|
 | **Múltiplas paróquias** | ~1h | Pendente |
 | **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
-| **Análise de temas recorrentes** (IA detecta padrões nos resumos) | ~1h | Pendente |
 
 ---
 

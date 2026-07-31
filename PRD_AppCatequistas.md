@@ -20,7 +20,7 @@
 - Login com e-mail e senha (SHA256 + session cookie)
 - Alteração de e-mail e senha pelo admin (página `/configuracoes`)
 - Redefinição de senha pelo admin (na edição do catequista)
-- Proxy protegendo rotas administrativas (exceto `/presenca/confirmar` e `/recuperar-senha`)
+- Proxy protegendo rotas administrativas (públicas: `/login`, `/recuperar-senha`, `/presenca/confirmar`, `/presenca/historico`)
 - Página pública `/presenca/confirmar` — **sem login** (catequista seleciona nome)
 - Cache-Control: no-cache em todas as páginas HTML (evita cache do Cloudflare)
 
@@ -38,6 +38,9 @@
 - Ou link do Google Drive
 - Busca por tema na tabela
 - Input de data nativo (`<input type="date">`) — consistente com os relatórios
+- **Nº do Encontro** (`numeroEncontro`, 1-15): campo opcional no form, usado para posicionar a coluna na planilha diocesana
+- **Datas em meio-dia UTC** (`T12:00:00Z`): convenção que evita o deslocamento de dia no fuso Brasília (meia-noite UTC vira 21h do dia anterior)
+- **Lista ordenada por número**: a tabela e o seletor de presença usam o Nº do encontro (1, 2, 3...) em vez da data
 
 ### Turmas
 - CRUD completo (nome, descrição)
@@ -47,7 +50,9 @@
 - Confirmação com 1 clique
 - Justificativa de ausência com campo de texto
 - Prevenção de duplicidade
-- **Painel Admin** (`/presenca`): card do próximo encontro, botão WhatsApp para compartilhar link, estatísticas de confirmação, lista de catequistas com status
+- **Painel Admin** (`/presenca`): seletor de encontro (qualquer um, inclusive passados), card do encontro, botão WhatsApp para compartilhar link, estatísticas de confirmação, lista de catequistas com status
+- **Marcação retroativa pelo admin**: botões Presente/Ausente/Pendente por catequista para lançar a frequência de encontros feitos manualmente na época (sem notificações Discord/push)
+- **Link público honra `?encontro=`**: QR/WhatsApp/link público apontam para o encontro exato (à prova de fuso); a página `/presenca/confirmar` mostra esse encontro, inclusive passados
 - **Mensagem WhatsApp personalizada**: IA gera mensagem para cada catequista ausente/pendente com base no histórico; se tiver telefone cadastrado, abre direto na conversa (`wa.me/55NUMERO`)
 - **Página pública** (`/presenca/confirmar`): catequista seleciona nome, vê próximo encontro, confirma/justifica, baixa PDF do encontro
 - **Discord automático**: notifica quando alguém confirma presença ou justifica ausência
@@ -65,6 +70,7 @@
 - **Baixa Frequência** (catequistas abaixo do limite) — stats cards + tabela Catequista/Presenças/Frequência
 - **Relatório Narrativo** (`/relatorios/narrativo`): IA gera relatório mensal formal em markdown
 - **Análise de Faltas** (aba Análise IA): IA detecta padrões de ausência e recomenda ações pastorais
+- **Análise de Temas Recorrentes** (`/relatorios/temas`): IA analisa os resumos dos encontros e mostra temas recorrentes, evolução e sugestões para os próximos
 - Todas as abas com formatação visual idêntica
 
 ### Exportação
@@ -131,6 +137,11 @@
   - **Mensagem livre**: coordenador escreve, IA melhora o tom e corrige
 - Botão de cópia automática para área de transferência
 - Botão para abrir diretamente no WhatsApp Web
+
+### Sincronização Diocesana
+- Um clique em Configurações envia as presenças para a planilha da Escola Diocesana de Santo André
+- Script Google Apps Script (`docs/gas-sincronizar.gs`) com `SHEET_ID` fixo, posicionando a coluna pelo `numeroEncontro`
+- Config guardada no banco: `diocesan_webhook_url`, `diocesan_last_sync` (token de segurança `catequistas-sync-2026`)
 
 ### Notificações
 - Discord via Webhook
@@ -230,6 +241,7 @@ AppCatequistas/
 │   │   │   └── relatorios/
 │   │   │       ├── frequencia/
 │   │   │       ├── narrativo/          # Relatório mensal por IA
+│   │   │       ├── temas/              # Análise de temas recorrentes por IA
 │   │   │       └── exportar/
 │   │   ├── presenca/
 │   │   │   └── confirmar/             # Página pública (sem login)
