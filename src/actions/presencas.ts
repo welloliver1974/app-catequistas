@@ -120,3 +120,43 @@ export async function justificarAusencia(encontroId: string, catequistaId: strin
   revalidatePath("/presenca/confirmar")
   return { success: true }
 }
+
+export type EstadoPresenca = "presente" | "ausente" | "pendente"
+
+/**
+ * Marcação feita pelo admin (painel de presença) — permite lançar a
+ * frequência de encontros passados a partir dos registros manuais.
+ * Diferente de confirmarPresenca/justificarAusencia, NÃO dispara
+ * notificações (Discord/push) para não gerar spam em entrada retroativa.
+ */
+export async function marcarPresencaAdmin(
+  encontroId: string,
+  catequistaId: string,
+  estado: EstadoPresenca
+): Promise<{ success?: boolean; error?: string }> {
+  if (estado !== "presente" && estado !== "ausente" && estado !== "pendente") {
+    return { error: "Estado inválido." }
+  }
+
+  try {
+    if (estado === "pendente") {
+      // Remove o registro (a unique @@unique([encontroId, catequistaId])
+      // fica livre para recriar depois) — o catequista volta a "Pendente".
+      await prisma.registroPresenca.deleteMany({
+        where: { encontroId, catequistaId },
+      })
+    } else {
+      const presente = estado === "presente"
+      await prisma.registroPresenca.upsert({
+        where: { encontroId_catequistaId: { encontroId, catequistaId } },
+        update: { presente, justificativa: null },
+        create: { encontroId, catequistaId, presente, justificativa: null },
+      })
+    }
+  } catch {
+    return { error: "Não foi possível registrar a presença." }
+  }
+
+  revalidatePath("/presenca")
+  return { success: true }
+}

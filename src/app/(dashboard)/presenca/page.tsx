@@ -6,7 +6,11 @@ import { inicioDoDiaBrasilia } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
-export default async function PresencaPage() {
+export default async function PresencaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const cookieStore = await cookies()
   const userId = cookieStore.get("session")?.value
   if (!userId) redirect("/login")
@@ -17,28 +21,51 @@ export default async function PresencaPage() {
   })
   if (!user) redirect("/login")
 
-  // Busca encontro a partir da meia-noite de hoje no horário de Brasília.
-  // Isso mantém o encontro do dia visível até 23h59 locais, mesmo quando
-  // em UTC já é o dia seguinte.
-  let proximoEncontro = await prisma.encontro.findFirst({
-    where: { data: { gte: inicioDoDiaBrasilia() } },
+  // Todos os encontros em ordem cronológica para o admin escolher qualquer
+  // encontro (inclusive passados) e lançar a frequência retroativamente.
+  const encontros = await prisma.encontro.findMany({
     orderBy: { data: "asc" },
-    include: { turma: { select: { nome: true } } },
+    select: { id: true, tema: true, data: true, numeroEncontro: true },
   })
-  const isPassado = !proximoEncontro
-  if (!proximoEncontro) {
-    proximoEncontro = await prisma.encontro.findFirst({
-      orderBy: { data: "desc" },
+
+  // Resolve o encontro exibido: ?encontro=<id> específico (vindo do seletor),
+  // ou o automático (próximo futuro; se não houver, o mais recente).
+  const { encontro: encontroParam } = await searchParams
+  const encontroParamStr = typeof encontroParam === "string" ? encontroParam : ""
+
+  let encontro = encontroParamStr
+    ? await prisma.encontro.findUnique({
+        where: { id: encontroParamStr },
+        include: { turma: { select: { nome: true } } },
+      })
+    : null
+
+  const selecionado = encontro !== null
+  // Id inválido/removido: normaliza a URL para que UI e URL nunca divirjam.
+  if (encontroParamStr && !encontro) redirect("/presenca")
+
+  if (!encontro) {
+    encontro = await prisma.encontro.findFirst({
+      where: { data: { gte: inicioDoDiaBrasilia() } },
+      orderBy: { data: "asc" },
       include: { turma: { select: { nome: true } } },
     })
+    if (!encontro) {
+      encontro = await prisma.encontro.findFirst({
+        orderBy: { data: "desc" },
+        include: { turma: { select: { nome: true } } },
+      })
+    }
   }
+
+  const dataPassada = !!encontro && encontro.data.getTime() < inicioDoDiaBrasilia().getTime()
 
   let presencas: { catequistaId: string; presente: boolean; justificativa: string | null }[] = []
   let catequistas: { id: string; nome: string; telefone: string | null }[] = []
 
-  if (proximoEncontro) {
+  if (encontro) {
     presencas = await prisma.registroPresenca.findMany({
-      where: { encontroId: proximoEncontro.id },
+      where: { encontroId: encontro.id },
       select: { catequistaId: true, presente: true, justificativa: true },
     })
 
@@ -64,15 +91,24 @@ export default async function PresencaPage() {
   return (
     <PresencaAdminClient
       user={{ name: user.name ?? "Admin" }}
-      proximoEncontro={proximoEncontro ? {
-        id: proximoEncontro.id,
-        tema: proximoEncontro.tema,
-        data: proximoEncontro.data.toISOString(),
-        local: proximoEncontro.local ?? "",
-        linkPdf: proximoEncontro.linkPdf ?? "",
-        turma: proximoEncontro.turma.nome,
-        isPassado,
+      encontro={encontro ? {
+        id: encontro.id,
+        tema: encontro.tema,
+        data: encontro.data.toISOString(),
+        local: encontro.local ?? "",
+        linkPdf: encontro.linkPdf ?? "",
+        turma: encontro.turma.nome,
+        numeroEncontro: encontro.numeroEncontro,
+        selecionado,
+        dataPassada,
       } : null}
+      encontroSelecionadoId={selecionado && encontro ? encontro.id : "auto"}
+      encontros={encontros.map((e) => ({
+        id: e.id,
+        data: e.data.toISOString(),
+        tema: e.tema,
+        numeroEncontro: e.numeroEncontro,
+      }))}
       catequistas={catequistas.map((c) => ({
         id: c.id,
         nome: c.nome,

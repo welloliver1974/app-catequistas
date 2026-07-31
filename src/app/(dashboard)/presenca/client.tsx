@@ -2,21 +2,37 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText, Sparkles, Loader2, Copy, QrCode, Download } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Church, CheckCircle2, XCircle, Clock, ExternalLink, MessageCircle, FileText, Sparkles, Loader2, Copy, QrCode, Download, CalendarDays } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+type EstadoPresenca = "presente" | "ausente" | "pendente"
+
+interface EncontroSeletor {
+  id: string
+  data: string
+  tema: string
+  numeroEncontro: number | null
+}
 
 interface Props {
   user: { name: string }
-  proximoEncontro: {
+  encontro: {
     id: string
     tema: string
     data: string
     local: string
     linkPdf: string
     turma: string
-    isPassado?: boolean
+    numeroEncontro: number | null
+    selecionado: boolean
+    dataPassada: boolean
   } | null
+  encontroSelecionadoId: string
+  encontros: EncontroSeletor[]
   catequistas: {
     id: string
     nome: string
@@ -36,38 +52,91 @@ function formatDate(iso: string) {
   })
 }
 
-export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats }: Props) {
+function formatDataCurta(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-BR")
+}
+
+function labelEncontro(e: EncontroSeletor) {
+  return e.numeroEncontro
+    ? `Encontro ${e.numeroEncontro} — ${formatDataCurta(e.data)}`
+    : `${formatDataCurta(e.data)} — ${e.tema}`
+}
+
+const MARCAR_OPCOES = [
+  { estado: "presente" as const, Icon: CheckCircle2, label: "Presente" },
+  { estado: "ausente" as const, Icon: XCircle, label: "Ausente" },
+  { estado: "pendente" as const, Icon: Clock, label: "Pendente" },
+]
+
+export function PresencaAdminClient({ user, encontro, encontroSelecionadoId, encontros, catequistas, stats }: Props) {
   const siteUrl = "https://catequistas.housecloud.tec.br"
+  const router = useRouter()
   const [mensagemModal, setMensagemModal] = useState<{ nome: string; texto: string; telefone: string } | null>(null)
   const [qrModal, setQrModal] = useState(false)
   const [gerandoMsg, setGerandoMsg] = useState<string | null>(null) // catequistaId sendo gerado
   const [copiado, setCopiado] = useState(false)
+  const [marcando, setMarcando] = useState<{ catequistaId: string; estado: EstadoPresenca } | null>(null)
+  const [erroMarca, setErroMarca] = useState<string | null>(null)
 
-  const mensagemWhatsApp = proximoEncontro
-    ? `*Proximo Encontro de Catequese*\nData: ${new Date(proximoEncontro.data).toLocaleDateString("pt-BR")}\nLocal: ${proximoEncontro.local || proximoEncontro.turma}\nTema: ${proximoEncontro.tema}\n\nConfirme sua presenca:\n${siteUrl}/presenca/confirmar`
+  const tituloCard = encontro
+    ? encontro.selecionado
+      ? encontro.numeroEncontro
+        ? `Encontro ${encontro.numeroEncontro}`
+        : `Encontro — ${formatDataCurta(encontro.data)}`
+      : encontro.dataPassada
+        ? "Último Encontro"
+        : "Próximo Encontro"
     : ""
+
+  const mostrarBadgeSemFuturo = !!encontro && !encontro.selecionado && encontro.dataPassada
+  const esconderCompartilhamento = !!encontro && encontro.selecionado && encontro.dataPassada
+  const tituloWhatsApp = encontro && (encontro.selecionado || encontro.dataPassada)
+    ? "Encontro de Catequese"
+    : "Proximo Encontro de Catequese"
+
+  const mensagemWhatsApp = encontro
+    ? `*${tituloWhatsApp}*\nData: ${formatDataCurta(encontro.data)}\nLocal: ${encontro.local || encontro.turma}\nTema: ${encontro.tema}\n\nConfirme sua presenca:\n${siteUrl}/presenca/confirmar`
+    : ""
+
+  function handleSelecionarEncontro(value: string) {
+    if (value === "auto") router.replace("/presenca", { scroll: false })
+    else router.replace(`/presenca?encontro=${value}`, { scroll: false })
+  }
+
+  async function handleMarcar(catequistaId: string, estado: EstadoPresenca) {
+    if (!encontro) return
+    setMarcando({ catequistaId, estado })
+    setErroMarca(null)
+    try {
+      const { marcarPresencaAdmin } = await import("@/actions/presencas")
+      const res = await marcarPresencaAdmin(encontro.id, catequistaId, estado)
+      if (res.error) setErroMarca(res.error)
+    } finally {
+      setMarcando(null)
+    }
+  }
 
   function abrirWhatsApp() {
     const url = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`
     window.open(url, "_blank")
   }
 
-  const qrUrl = proximoEncontro
-    ? `${siteUrl}/api/qr?url=${encodeURIComponent(`${siteUrl}/presenca/confirmar?encontro=${proximoEncontro.id}`)}`
+  const qrUrl = encontro
+    ? `${siteUrl}/api/qr?url=${encodeURIComponent(`${siteUrl}/presenca/confirmar?encontro=${encontro.id}`)}`
     : ""
 
   function baixarQR() {
     const link = document.createElement("a")
     link.href = qrUrl
-    link.download = `qrcode-encontro-${proximoEncontro?.id}.svg`
+    link.download = `qrcode-encontro-${encontro?.id}.svg`
     link.click()
   }
 
   async function handleGerarMensagem(catequistaId: string, nome: string, telefone: string) {
-    if (!proximoEncontro) return
+    if (!encontro) return
     setGerandoMsg(catequistaId)
     const { gerarMensagemCatequista } = await import("@/actions/ai")
-    const res = await gerarMensagemCatequista(catequistaId, proximoEncontro.id)
+    const res = await gerarMensagemCatequista(catequistaId, encontro.id)
     if (res.mensagem) {
       setMensagemModal({ nome, texto: res.mensagem, telefone })
     }
@@ -123,7 +192,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
       )}
 
       {/* Modal QR Code */}
-      {qrModal && proximoEncontro && (
+      {qrModal && encontro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -146,7 +215,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                 <Download className="h-4 w-4" />
                 Baixar SVG
               </Button>
-              <Button size="sm" className="flex-1 gap-2" onClick={() => window.open(`${siteUrl}/presenca/confirmar?encontro=${proximoEncontro.id}`, "_blank")}>
+              <Button size="sm" className="flex-1 gap-2" onClick={() => window.open(`${siteUrl}/presenca/confirmar?encontro=${encontro.id}`, "_blank")}>
                 <ExternalLink className="h-4 w-4" />
                 Abrir Link
               </Button>
@@ -160,7 +229,30 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
       </header>
 
       <div className="p-4 sm:p-6 space-y-6">
-        {proximoEncontro ? (
+        {/* Seletor de encontro */}
+        {encontros.length > 0 && (
+          <Card className="border-border/50">
+            <CardContent className="p-4 space-y-2">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5" />
+                Encontro
+              </Label>
+              <Select value={encontroSelecionadoId} onValueChange={handleSelecionarEncontro}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione um encontro..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Próximo encontro (automático)</SelectItem>
+                  {encontros.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{labelEncontro(e)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
+
+        {encontro ? (
           <>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background overflow-hidden">
@@ -170,23 +262,28 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                       <div className="flex items-center gap-2">
                         <Church className="h-5 w-5 text-primary" />
                         <span className="text-sm font-medium text-primary uppercase tracking-wide">
-                          {proximoEncontro.isPassado ? "Último Encontro" : "Próximo Encontro"}
+                          {tituloCard}
                         </span>
-                        {proximoEncontro.isPassado && (
+                        {mostrarBadgeSemFuturo && (
                           <span className="text-xs bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium">
                             Sem encontro futuro agendado
                           </span>
                         )}
+                        {encontro.selecionado && encontro.dataPassada && (
+                          <span className="text-xs bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium">
+                            Encontro passado
+                          </span>
+                        )}
                       </div>
-                      <h2 className="text-2xl font-bold">{proximoEncontro.tema}</h2>
+                      <h2 className="text-2xl font-bold">{encontro.tema}</h2>
                       <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-                        <span>{formatDate(proximoEncontro.data)}</span>
-                        <span>{proximoEncontro.local || proximoEncontro.turma}</span>
+                        <span>{formatDate(encontro.data)}</span>
+                        <span>{encontro.local || encontro.turma}</span>
                       </div>
                       <div className="flex flex-wrap gap-2 pt-2">
-                        {proximoEncontro.linkPdf && (
+                        {encontro.linkPdf && (
                           <a
-                            href={proximoEncontro.linkPdf}
+                            href={encontro.linkPdf}
                             target="_blank"
                             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
                           >
@@ -194,25 +291,29 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                             Material (PDF)
                           </a>
                         )}
-                        <a
-                          href={`${siteUrl}/presenca/confirmar`}
-                          target="_blank"
-                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Link público de presença
-                        </a>
+                        {!esconderCompartilhamento && (
+                          <a
+                            href={`${siteUrl}/presenca/confirmar`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Link público de presença
+                          </a>
+                        )}
                       </div>
                     </div>
-                    <div className="flex gap-2 w-full md:w-auto">
-                      <Button onClick={abrirWhatsApp} className="flex-1 md:flex-initial gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
-                        <MessageCircle className="h-5 w-5" />
-                        Compartilhar
-                      </Button>
-                      <Button variant="outline" onClick={() => setQrModal(true)} className="gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
-                        <QrCode className="h-5 w-5" />
-                      </Button>
-                    </div>
+                    {!esconderCompartilhamento && (
+                      <div className="flex gap-2 w-full md:w-auto">
+                        <Button onClick={abrirWhatsApp} className="flex-1 md:flex-initial gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                          <MessageCircle className="h-5 w-5" />
+                          Compartilhar
+                        </Button>
+                        <Button variant="outline" onClick={() => setQrModal(true)} className="gap-2 h-10 text-sm md:h-11 md:text-base" size="lg">
+                          <QrCode className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -255,31 +356,38 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.02 }}
-                        className="flex items-center justify-between px-4 sm:px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
+                        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 sm:px-6 py-3 text-sm hover:bg-muted/30 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium">{c.nome}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="font-medium truncate">{c.nome}</span>
                           {c.justificativa && (
                             <span className="text-xs text-muted-foreground italic max-w-[120px] xs:max-w-xs truncate">
                               &quot;{c.justificativa}&quot;
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {c.presente === true ? (
-                            <span className="flex items-center gap-1 text-primary text-xs font-medium">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Presente
-                            </span>
-                          ) : c.presente === false ? (
-                            <span className="flex items-center gap-1 text-yellow-500 text-xs font-medium">
-                              <XCircle className="h-3.5 w-3.5" /> Ausente
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-muted-foreground text-xs font-medium">
-                              <Clock className="h-3.5 w-3.5" /> Pendente
-                            </span>
-                          )}
-                          {(c.presente === false || c.presente === null) && proximoEncontro && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {MARCAR_OPCOES.map(({ estado, Icon, label }) => {
+                            const ativo =
+                              (estado === "presente" && c.presente === true) ||
+                              (estado === "ausente" && c.presente === false) ||
+                              (estado === "pendente" && c.presente === null)
+                            const processando = marcando?.catequistaId === c.id && marcando.estado === estado
+                            return (
+                              <Button
+                                key={estado}
+                                size="sm"
+                                variant={ativo ? "default" : "outline"}
+                                disabled={marcando !== null}
+                                onClick={() => handleMarcar(c.id, estado)}
+                                className="gap-1 h-7 px-2 text-xs"
+                              >
+                                {processando ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
+                                {label}
+                              </Button>
+                            )
+                          })}
+                          {(c.presente === false || c.presente === null) && encontro && (
                             <button
                               title="Gerar mensagem IA"
                               onClick={() => handleGerarMensagem(c.id, c.nome, c.telefone)}
@@ -296,6 +404,9 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
                     ))}
                   </div>
                 )}
+                {erroMarca && (
+                  <p className="text-sm text-destructive px-4 sm:px-6 py-2">{erroMarca}</p>
+                )}
               </CardContent>
             </Card>
           </>
@@ -303,7 +414,7 @@ export function PresencaAdminClient({ user, proximoEncontro, catequistas, stats 
           <Card className="border-border/50">
             <CardContent className="p-12 text-center text-muted-foreground space-y-2">
               <Church className="h-12 w-12 mx-auto opacity-30" />
-              <p className="text-base font-medium">Nenhum encontro futuro agendado</p>
+              <p className="text-base font-medium">Nenhum encontro cadastrado</p>
               <p className="text-sm">Crie um encontro para começar a registrar presenças.</p>
             </CardContent>
           </Card>
