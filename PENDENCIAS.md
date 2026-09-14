@@ -59,12 +59,12 @@
 - [x] **Persistência de chaves por provedor no projeto** — Chaves salvas separadamente no SQLite (`dev.db`) por provedor, lembrando automaticamente ao alternar
 - [x] **Teste de conexão de IA com medição de latência** — Validação instantânea da chave e modelo antes de salvar
 - [x] **Deploy remoto automatizado** — Scripts e fluxo documentados para deploy via SSH direto da máquina local
+- [x] **Seletor Rápido na Presença Pública com Iniciais A-Z e Memória** — Substituído o `<Select>` comum por barra de letras iniciais (zero digitação, 2 toques no celular), memória no aparelho (`localStorage`) para confirmação em 1 toque a partir do 2º encontro e busca opcional
 
 ## 🔲 Pendências e Ideias Futuras (Backlog)
 
 ### 🎯 UX & Navegação (Prioritário)
 - [ ] **Organização da Sidebar em Categorias**: Agrupar os 17 itens soltos da barra lateral em 4 blocos visuais (`Geral`, `Catequese`, `Pastoral & IA`, `Sistema`) com cabeçalhos sutis para evitar scroll vertical e melhorar a ergonomia.
-- [ ] **Busca Rápida de Nome na Presença Pública (`/presenca/confirmar`)**: Substituir o `<Select>` comum por um Searchable Combobox com autocomplete, facilitando para os catequistas localizarem seu nome digitando apenas 2 letras em vez de rolar 85 opções no celular.
 - [ ] **URL Dinâmica no Compartilhamento WhatsApp**: Substituir a URL fixa `catequistas.housecloud.tec.br` em `src/app/(dashboard)/presenca/client.tsx` por resolução dinâmica (`window.location.origin` ou `process.env.NEXT_PUBLIC_SITE_URL`), garantindo que funcione perfeitamente em dev e em produção.
 
 ### 🧠 Inteligência Artificial & Dados
