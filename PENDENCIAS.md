@@ -60,12 +60,25 @@
 - [x] **Teste de conexão de IA com medição de latência** — Validação instantânea da chave e modelo antes de salvar
 - [x] **Deploy remoto automatizado** — Scripts e fluxo documentados para deploy via SSH direto da máquina local
 
-## 🔲 Pendente
+## 🔲 Pendências e Ideias Futuras (Backlog)
 
-| Tarefa | Tempo | Status |
-|---|---|---|
-| **Múltiplas paróquias** | ~1h | Pendente |
-| **Recuperação de senha real** (envio de email) | ~30 min | Pendente |
+### 🎯 UX & Navegação (Prioritário)
+- [ ] **Organização da Sidebar em Categorias**: Agrupar os 17 itens soltos da barra lateral em 4 blocos visuais (`Geral`, `Catequese`, `Pastoral & IA`, `Sistema`) com cabeçalhos sutis para evitar scroll vertical e melhorar a ergonomia.
+- [ ] **Busca Rápida de Nome na Presença Pública (`/presenca/confirmar`)**: Substituir o `<Select>` comum por um Searchable Combobox com autocomplete, facilitando para os catequistas localizarem seu nome digitando apenas 2 letras em vez de rolar 85 opções no celular.
+- [ ] **URL Dinâmica no Compartilhamento WhatsApp**: Substituir a URL fixa `catequistas.housecloud.tec.br` em `src/app/(dashboard)/presenca/client.tsx` por resolução dinâmica (`window.location.origin` ou `process.env.NEXT_PUBLIC_SITE_URL`), garantindo que funcione perfeitamente em dev e em produção.
+
+### 🧠 Inteligência Artificial & Dados
+- [ ] **Expandir Contexto do Assistente IA (`perguntarAoAssistente`)**: Remover a trava `.slice(0, 20)` em `src/actions/ai.ts`. Com os modelos modernos (NVIDIA Llama 3.3 70B, etc.), enviar a lista completa dos 85 catequistas e dados consolidados para que o chat responda com precisão sobre qualquer pessoa da paróquia.
+- [ ] **Áudio do Resumo (TTS) na Área Pública**: Permitir que os catequistas ouçam a leitura em áudio do resumo do encontro diretamente no histórico público ou na confirmação de presença.
+
+### 🔒 Segurança & Contas
+- [ ] **Assinatura Criptográfica no Cookie de Sessão**: Adicionar assinatura HMAC/JWT ao cookie `session` para proteger contra adulteração de IDs.
+- [ ] **Salt no Hash de Senha**: Migrar o hash `sha256` simples para `bcrypt` ou `argon2` com salt.
+- [ ] **Recuperação Real de Senha**: Implementar fluxo real de recuperação via e-mail ou código de verificação pelo WhatsApp.
+
+### ⛪ Expansão Pastoral
+- [ ] **Filtros por Turma nos Relatórios**: Permitir filtrar relatórios e exportações diretamente por Turma (Crisma, Primeira Eucaristia, Adultos, etc.).
+- [ ] **Múltiplas Paróquias / Foranias**: Suporte a isolamento multi-tenant por paróquia.
 
 ---
 
