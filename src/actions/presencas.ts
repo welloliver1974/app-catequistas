@@ -160,3 +160,54 @@ export async function marcarPresencaAdmin(
   revalidatePath("/presenca")
   return { success: true }
 }
+
+/**
+ * Sincroniza em lote a chamada offline do coordenador.
+ * Grava ou atualiza todos os registros em uma única transação SQLite.
+ */
+export async function sincronizarChamadaLote(
+  encontroId: string,
+  registros: Array<{ catequistaId: string; estado: EstadoPresenca }>
+): Promise<{ success?: boolean; salvos?: number; error?: string }> {
+  if (!encontroId || !Array.isArray(registros)) {
+    return { error: "Dados de chamada inválidos." }
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const item of registros) {
+        if (item.estado === "pendente") {
+          await tx.registroPresenca.deleteMany({
+            where: { encontroId, catequistaId: item.catequistaId },
+          })
+        } else if (item.estado === "presente" || item.estado === "ausente") {
+          await tx.registroPresenca.upsert({
+            where: {
+              encontroId_catequistaId: {
+                encontroId,
+                catequistaId: item.catequistaId,
+              },
+            },
+            update: {
+              presente: item.estado === "presente",
+              justificativa: null,
+            },
+            create: {
+              encontroId,
+              catequistaId: item.catequistaId,
+              presente: item.estado === "presente",
+              justificativa: null,
+            },
+          })
+        }
+      }
+    })
+
+    revalidatePath("/presenca")
+    revalidatePath("/presenca/chamada")
+    return { success: true, salvos: registros.length }
+  } catch (err: any) {
+    return { error: err?.message || "Erro ao sincronizar registros de chamada." }
+  }
+}
+

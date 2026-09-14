@@ -301,10 +301,10 @@ export async function perguntarAoAssistente(pergunta: string) {
 
     const contexto = `
 CATEQUISTAS (${catequistas.length} ativos):
-${catequistas.slice(0, 20).map((c) => `  ${c.nome} - presenças: ${c._count.presencas} - turmas: ${c.turmas.map((t) => t.turma.nome).join(", ")}`).join("\n")}
+${catequistas.map((c) => `  ${c.nome} - presenças: ${c._count.presencas}${c.telefone ? ` - tel: ${c.telefone}` : ""} - turmas: ${c.turmas.map((t) => t.turma.nome).join(", ") || "Sem turma"}`).join("\n")}
 
-ENCONTROS (${encontros.length} últimos):
-${encontros.slice(0, 20).map((e) => `  ${e.data.toISOString().split("T")[0]} - ${e.tema} - presenças: ${e._count.presencas}`).join("\n")}
+ENCONTROS (${encontros.length} cadastrados):
+${encontros.map((e) => `  ${e.data.toISOString().split("T")[0]} - ${e.tema} - presenças: ${e._count.presencas}`).join("\n")}
 
 TURMAS:
 ${turmas.map((t) => `  ${t.nome} - ${t._count.catequistas} catequistas, ${t._count.encontros} encontros`).join("\n")}
