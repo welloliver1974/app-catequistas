@@ -175,23 +175,39 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
     return Array.from(s).sort()
   }, [lista])
 
-  // Lista filtrada
+  // Lista filtrada inteligente
   const filtrados = useMemo(() => {
+    const busca = termoBusca.trim()
+    const buscaNorm = busca.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
     return lista.filter((c) => {
-      if (letraAtiva && getLetraInicial(c.nome) !== letraAtiva) return false
       if (filtroEstado !== "todos") {
         if (filtroEstado === "pendentes" && c.estado !== "pendente") return false
         if (filtroEstado === "presentes" && c.estado !== "presente") return false
         if (filtroEstado === "ausentes" && c.estado !== "ausente") return false
       }
-      if (termoBusca.trim()) {
-        const buscaNorm = termoBusca.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      if (busca) {
         const nomeNorm = c.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        if (!nomeNorm.includes(buscaNorm)) return false
+        return nomeNorm.includes(buscaNorm)
+      }
+      if (letraAtiva) {
+        return getLetraInicial(c.nome) === letraAtiva
       }
       return true
     })
   }, [lista, letraAtiva, filtroEstado, termoBusca])
+
+  function handleMudarBusca(texto: string) {
+    setTermoBusca(texto)
+    if (texto.trim()) {
+      setLetraAtiva("")
+    }
+  }
+
+  function handleSelecionarLetra(letra: string) {
+    setLetraAtiva((prev) => (prev === letra ? "" : letra))
+    setTermoBusca("")
+  }
 
   // Contadores
   const stats = useMemo(() => {
@@ -359,14 +375,14 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={termoBusca}
-              onChange={(e) => setTermoBusca(e.target.value)}
+              onChange={(e) => handleMudarBusca(e.target.value)}
               placeholder="Buscar catequista..."
               className="pl-8 pr-8 h-9 text-xs"
             />
             {termoBusca && (
               <button
                 type="button"
-                onClick={() => setTermoBusca("")}
+                onClick={() => handleMudarBusca("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
@@ -393,14 +409,14 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
           </div>
         </div>
 
-        {/* Barra de Letras Iniciais (A-Z) */}
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+        {/* Letras Iniciais (A-Z) VISÍVEIS EM WRAP (Sem esconder do J em diante!) */}
+        <div className="flex flex-wrap gap-1 items-center justify-start">
           <button
             type="button"
-            onClick={() => setLetraAtiva("")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium shrink-0 transition-colors ${
-              letraAtiva === ""
-                ? "bg-primary text-primary-foreground font-semibold"
+            onClick={() => handleSelecionarLetra("")}
+            className={`h-7 px-2.5 rounded-md text-xs font-semibold transition-colors ${
+              letraAtiva === "" && !termoBusca
+                ? "bg-primary text-primary-foreground"
                 : "bg-muted/70 text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -410,10 +426,10 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
             <button
               type="button"
               key={letra}
-              onClick={() => setLetraAtiva(letraAtiva === letra ? "" : letra)}
-              className={`w-7 h-7 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
+              onClick={() => handleSelecionarLetra(letra)}
+              className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${
                 letraAtiva === letra
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground scale-105 shadow-xs"
                   : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
@@ -442,7 +458,7 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
               }`}
             >
               {/* Identificação */}
-              <div className="min-w-0 flex items-center gap-3">
+              <div className="min-w-0 flex items-center gap-3 flex-1">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                   c.estado === "presente"
                     ? "bg-emerald-500/20 text-emerald-500"
@@ -452,8 +468,8 @@ export function ChamadaOfflineClient({ encontro, encontros, catequistasIniciais 
                 }`}>
                   {c.nome.charAt(0)}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate leading-tight">{c.nome}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold break-words whitespace-normal leading-tight">{c.nome}</p>
                   {c.telefone && <p className="text-[11px] text-muted-foreground">{c.telefone}</p>}
                 </div>
               </div>
