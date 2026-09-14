@@ -54,6 +54,11 @@
 - [x] **Proteção de rotas** — `/mensagens` e `/assistente` pedem login; `/presenca/historico` volta a ser público
 - [x] **Análise de temas recorrentes** — IA mapeia os temas dos resumos e sugere os próximos encontros
 - [x] **Correção de datas (fuso)** — encontros gravados em meio-dia UTC (`T12:00:00Z`) para não deslocar o dia no fuso Brasília
+- [x] **Suporte a NVIDIA (NIM) e Custom AI** — Adicionado NVIDIA (Llama 3.3 70B, DeepSeek R1/V3, Nemotron, Mistral) e Provedor Personalizado com Base URL (Ollama, LM Studio, etc.)
+- [x] **Listagem dinâmica de modelos de IA** — Botão "Listar da API" que consulta `/models` com a chave do usuário em tempo real
+- [x] **Persistência de chaves por provedor no projeto** — Chaves salvas separadamente no SQLite (`dev.db`) por provedor, lembrando automaticamente ao alternar
+- [x] **Teste de conexão de IA com medição de latência** — Validação instantânea da chave e modelo antes de salvar
+- [x] **Deploy remoto automatizado** — Scripts e fluxo documentados para deploy via SSH direto da máquina local
 
 ## 🔲 Pendente
 

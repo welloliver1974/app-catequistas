@@ -82,17 +82,24 @@
 - Snapshot automático antes de importar planilha
 
 ### Inteligência Artificial
-- Suporte a Groq (grátis) e OpenRouter
-- **Resumo do Tema**: coordenador descreve o encontro, IA estrutura em assunto, pontos, reflexão, avisos
-- **Conteúdo do Tema**: só com o nome do encontro, IA gera explicação, passagens bíblicas, reflexão e perguntas
-- **Sumário automático**: IA gera resumo executivo com dados de presença, ausências e justificativas
-- **Quiz do Encontro**: IA gera 5 perguntas de múltipla escolha sobre o tema
-- **Mensagem Personalizada**: IA escreve mensagem de WhatsApp acolhedora para catequista ausente
-- **Relatório Narrativo Mensal**: IA redige relatório formal de atividades
-- **Análise de Faltas**: IA identifica padrões de ausência e recomenda ações
-- **Assistente**: chat em `/assistente` que responde perguntas sobre os dados em linguagem natural
-- **TTS**: síntese de voz do resumo do encontro (Web Speech API)
-- Configuração de provedor, chave e modelo em Configurações
+- **Multi-Provedor**:
+  - **Groq**: Ultrarrápido e gratuito (Llama 3.3 70B, Llama 3.1 8B, DeepSeek R1 Distill 70B).
+  - **NVIDIA (NIM)**: Alta performance com modelos de ponta (`integrate.api.nvidia.com/v1`) como Llama 3.3 70B Instruct, DeepSeek R1/V3, Nemotron 70B e Mistral Large 2.
+  - **OpenRouter**: Agregador universal (GPT-4o mini, Claude 3.5 Haiku, DeepSeek V3/R1).
+  - **Personalizado / Local**: Qualquer endpoint compatível com OpenAI (Ollama, LM Studio, vLLM, DeepSeek direto) com Base URL configurável.
+- **Listagem Dinâmica de Modelos**: Botão "Listar da API" que consulta o endpoint `/models` em tempo real usando a chave da conta do usuário.
+- **Modelo Customizado Livre**: Opção de digitar qualquer identificador de modelo manualmente.
+- **Persistência de Chaves por Provedor**: Cada provedor guarda sua chave individualmente no banco SQLite (`dev.db`), com fallback opcional via `.env`. A chave não é perdida ao alternar provedores.
+- **Teste de Conexão Imediato**: Botão que valida a chave e o modelo em tempo real com medição de latência em milissegundos.
+- **Resumo do Tema**: coordenador descreve o encontro, IA estrutura em assunto, pontos, reflexão, avisos.
+- **Conteúdo do Tema**: só com o nome do encontro, IA gera explicação, passagens bíblicas, reflexão e perguntas.
+- **Sumário automático**: IA gera resumo executivo com dados de presença, ausências e justificativas.
+- **Quiz do Encontro**: IA gera 5 perguntas de múltipla escolha sobre o tema.
+- **Mensagem Personalizada**: IA escreve mensagem de WhatsApp acolhedora para catequista ausente.
+- **Relatório Narrativo Mensal**: IA redige relatório formal de atividades.
+- **Análise de Faltas**: IA identifica padrões de ausência e recomenda ações.
+- **Assistente**: chat em `/assistente` que responde perguntas sobre os dados em linguagem natural.
+- **TTS**: síntese de voz do resumo do encontro (Web Speech API).
 
 ### Importação
 - Importação via Google Sheets API (3 abas: ListaCatequistas, Temas, Presencas)

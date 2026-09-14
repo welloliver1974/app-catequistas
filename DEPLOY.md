@@ -20,19 +20,43 @@ ssh meu-vps
 > A chave SSH está configurada no arquivo `~/.ssh/config` do usuário `welld`.
 > Não compartilhe arquivos de chave privada (.key, .pem).
 
-## 🚀 Deploy manual
+> [!TIP]
+> **Permissão da chave no Windows (se der erro de chave aberta):**
+> ```powershell
+> icacls "C:\Users\welld\.ssh\vps_key_ubuntu" /inheritance:r
+> icacls "C:\Users\welld\.ssh\vps_key_ubuntu" /grant:r "$($env:USERNAME):(R,W)"
+> ```
 
-Conecte via SSH e rode:
+## 🚀 Deploy direto da máquina local (Recomendado)
+
+Você pode disparar o deploy completo com um único comando no terminal da sua máquina:
+
+```powershell
+# 1. Enviar alterações para o GitHub
+git add .
+git commit -m "feat/fix: descricao das alteracoes"
+git push origin master
+
+# 2. Executar deploy remoto no VPS via SSH (preservando o banco de dados)
+ssh meu-vps "cd /home/ubuntu/app-catequistas && cp dev.db dev.db.bak_seguranca && git stash && git pull origin master && cp dev.db.bak_seguranca dev.db && npm ci && npm run build && sudo systemctl restart catequistas"
+```
+
+## 🚀 Deploy manual (direto no servidor)
+
+Conecte via SSH (`ssh meu-vps`) e rode:
 
 ```bash
 cd /home/ubuntu/app-catequistas
+cp dev.db dev.db.bak_seguranca
+git stash
 git pull origin master
+cp dev.db.bak_seguranca dev.db
 npm ci
 npm run build
 sudo systemctl restart catequistas
 ```
 
-Ou use o script automatizado:
+Ou use o script automatizado no servidor:
 
 ```bash
 ./scripts/deploy.sh
