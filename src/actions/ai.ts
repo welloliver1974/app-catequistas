@@ -4,34 +4,195 @@ import { prisma } from "@/lib/prisma"
 import { gerarResumo as gerarResumoAi, gerarSumario as gerarSumarioAi, gerarConteudoTema as gerarConteudoTemaAi, perguntar as perguntarAi, gerarQuiz as gerarQuizAi, gerarMensagemPersonalizada as gerarMensagemPersonalizadaAi, gerarRelatorioMensal as gerarRelatorioMensalAi, analisarFaltas as analisarFaltasAi, analisarTemas as analisarTemasAi, gerarMensagemGrupo as gerarMensagemGrupoAi } from "@/lib/ai"
 import { revalidatePath } from "next/cache"
 
+import { AiProvider, PROVIDERS_INFO } from "@/lib/modelos-ai"
+import { getEndpointUrl } from "@/lib/ai"
+
 export async function salvarConfigAi(formData: FormData) {
-  const provider = formData.get("provider") as string
-  const apiKey = formData.get("apiKey") as string
-  const model = formData.get("model") as string
+  try {
+    const provider = (formData.get("provider") as AiProvider) || "groq"
+    const apiKey = (formData.get("apiKey") as string) || ""
+    const model = (formData.get("model") as string) || ""
+    const customBaseUrl = (formData.get("customBaseUrl") as string) || ""
 
-  const upsert = async (chave: string, valor: string) => {
-    await prisma.configuracao.upsert({
-      where: { chave },
-      update: { valor },
-      create: { chave, valor },
-    })
+    const upsert = async (chave: string, valor: string) => {
+      await prisma.configuracao.upsert({
+        where: { chave },
+        update: { valor },
+        create: { chave, valor },
+      })
+    }
+
+    await upsert("ai_provider", provider)
+    await upsert("ai_model", model)
+    if (apiKey) {
+      await upsert(`ai_key_${provider}`, apiKey)
+      await upsert("ai_api_key", apiKey) // retrocompatibilidade
+    }
+    if (customBaseUrl) {
+      await upsert("ai_custom_base_url", customBaseUrl)
+    }
+
+    revalidatePath("/configuracoes")
+    return { success: "Configurações salvas no projeto!" }
+  } catch (err: any) {
+    return { error: err?.message || "Erro ao salvar configurações de IA." }
   }
-
-  await upsert("ai_provider", provider)
-  await upsert("ai_api_key", apiKey)
-  await upsert("ai_model", model)
-
-  revalidatePath("/configuracoes")
 }
 
 export async function getConfigAi() {
   const getVal = async (chave: string) =>
     (await prisma.configuracao.findUnique({ where: { chave } }))?.valor ?? ""
 
+  const provider = ((await getVal("ai_provider")) || "groq") as AiProvider
+
+  const groqKey = (await getVal("ai_key_groq")) || process.env.GROQ_API_KEY || (provider === "groq" ? await getVal("ai_api_key") : "")
+  const nvidiaKey = (await getVal("ai_key_nvidia")) || process.env.NVIDIA_API_KEY || (provider === "nvidia" ? await getVal("ai_api_key") : "")
+  const openrouterKey = (await getVal("ai_key_openrouter")) || process.env.OPENROUTER_API_KEY || (provider === "openrouter" ? await getVal("ai_api_key") : "")
+  const customKey = (await getVal("ai_key_custom")) || process.env.CUSTOM_AI_API_KEY || (provider === "custom" ? await getVal("ai_api_key") : "")
+
+  const keys: Record<AiProvider, string> = {
+    groq: groqKey,
+    nvidia: nvidiaKey,
+    openrouter: openrouterKey,
+    custom: customKey,
+  }
+
+  const activeKey = keys[provider] || (await getVal("ai_api_key"))
+  const model = (await getVal("ai_model")) || (provider === "nvidia" ? "meta/llama-3.3-70b-instruct" : "llama-3.3-70b-versatile")
+  const customBaseUrl = (await getVal("ai_custom_base_url")) || process.env.CUSTOM_AI_BASE_URL || PROVIDERS_INFO.custom.baseUrl
+
   return {
-    provider: (await getVal("ai_provider")) || "groq",
-    apiKey: await getVal("ai_api_key"),
-    model: (await getVal("ai_model")) || "llama-3.3-70b-versatile",
+    provider,
+    apiKey: activeKey,
+    model,
+    customBaseUrl,
+    keys,
+  }
+}
+
+export async function listarModelosDisponiveis(provider: string, apiKey: string, customBaseUrl?: string) {
+  try {
+    if (!apiKey && provider !== "custom") {
+      return { error: "Informe a chave de API para consultar os modelos disponíveis." }
+    }
+
+    let url = ""
+    if (provider === "groq") {
+      url = "https://api.groq.com/openai/v1/models"
+    } else if (provider === "nvidia") {
+      url = "https://integrate.api.nvidia.com/v1/models"
+    } else if (provider === "openrouter") {
+      url = "https://openrouter.ai/api/v1/models"
+    } else {
+      const base = (customBaseUrl || "http://localhost:11434/v1").replace(/\/+$/, "").replace(/\/chat\/completions$/, "").replace(/\/models$/, "")
+      url = `${base}/models`
+    }
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(provider === "openrouter" ? { "HTTP-Referer": "https://catequistas.housecloud.tec.br" } : {}),
+      },
+      cache: "no-store",
+    })
+
+    if (!res.ok) {
+      const errText = await res.text()
+      return { error: `Erro na API ${provider.toUpperCase()} (${res.status}): ${errText.slice(0, 150)}` }
+    }
+
+    const json = await res.json()
+    const rawList = Array.isArray(json.data) ? json.data : Array.isArray(json.models) ? json.models : []
+
+    let modelos: { id: string; label: string }[] = []
+
+    if (provider === "groq") {
+      // Filtrar whisper e modelos não chat se aplicável
+      modelos = rawList
+        .filter((m: any) => m && m.id && !m.id.includes("whisper") && m.active !== false)
+        .map((m: any) => ({ id: m.id, label: m.id }))
+    } else if (provider === "nvidia") {
+      modelos = rawList
+        .filter((m: any) => m && m.id)
+        .map((m: any) => ({ id: m.id, label: m.id }))
+    } else if (provider === "openrouter") {
+      modelos = rawList
+        .filter((m: any) => m && m.id)
+        .map((m: any) => ({
+          id: m.id,
+          label: m.name ? `${m.name} (${m.id})` : m.id,
+        }))
+    } else {
+      // Custom / Ollama
+      modelos = rawList
+        .filter((m: any) => m && (m.id || m.name))
+        .map((m: any) => {
+          const id = m.id || m.name
+          return { id, label: id }
+        })
+    }
+
+    modelos.sort((a, b) => a.label.localeCompare(b.label))
+
+    if (modelos.length === 0) {
+      return { error: "Nenhum modelo foi retornado por este endpoint." }
+    }
+
+    return { success: true, modelos }
+  } catch (err: any) {
+    return { error: err?.message || "Falha ao listar modelos do provedor." }
+  }
+}
+
+export async function testarConexaoAi(provider: string, apiKey: string, model: string, customBaseUrl?: string) {
+  try {
+    if (!apiKey && provider !== "custom") {
+      return { error: "Informe a chave da API antes de testar a conexão." }
+    }
+    if (!model) {
+      return { error: "Selecione ou digite um modelo para testar." }
+    }
+
+    const url = getEndpointUrl(provider as AiProvider, customBaseUrl)
+    const t0 = performance.now()
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        ...(provider === "openrouter" ? { "HTTP-Referer": "https://catequistas.housecloud.tec.br" } : {}),
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: "Responda apenas com a palavra: OK" }],
+        temperature: 0.1,
+        max_tokens: 10,
+      }),
+      cache: "no-store",
+    })
+
+    const t1 = performance.now()
+    const latency = Math.round(t1 - t0)
+
+    if (!res.ok) {
+      const errText = await res.text()
+      return { error: `Erro na API ${provider.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}` }
+    }
+
+    const data = await res.json()
+    const resposta = data.choices?.[0]?.message?.content?.trim() || "OK"
+
+    return {
+      success: true,
+      latency,
+      resposta,
+      message: `Conexão bem-sucedida! Resposta em ${latency}ms.`,
+    }
+  } catch (err: any) {
+    return { error: err?.message || "Erro de conexão com o provedor de IA." }
   }
 }
 

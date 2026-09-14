@@ -1,10 +1,10 @@
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+import { AiProvider, PROVIDERS_INFO, MODELOS_SUGERIDOS } from "./modelos-ai"
 
-interface AiConfig {
-  provider: "groq" | "openrouter"
+export interface AiConfig {
+  provider: AiProvider
   apiKey: string
   model: string
+  customBaseUrl?: string
 }
 
 export async function getAiConfig(): Promise<AiConfig> {
@@ -12,11 +12,32 @@ export async function getAiConfig(): Promise<AiConfig> {
   const getVal = async (chave: string) =>
     (await prisma.configuracao.findUnique({ where: { chave } }))?.valor ?? ""
 
-  const provider = (await getVal("ai_provider")) || "groq"
-  const apiKey = await getVal("ai_api_key")
-  const model = (await getVal("ai_model")) || "llama-3.3-70b-versatile"
+  const provider = ((await getVal("ai_provider")) || "groq") as AiProvider
 
-  return { provider: provider as "groq" | "openrouter", apiKey, model }
+  // Busca chave específica do provedor salvo no banco ou fallback em variáveis de ambiente / chave legada
+  let apiKey = await getVal(`ai_key_${provider}`)
+  if (!apiKey) {
+    if (provider === "groq") {
+      apiKey = process.env.GROQ_API_KEY || ""
+    } else if (provider === "nvidia") {
+      apiKey = process.env.NVIDIA_API_KEY || ""
+    } else if (provider === "openrouter") {
+      apiKey = process.env.OPENROUTER_API_KEY || ""
+    } else if (provider === "custom") {
+      apiKey = process.env.CUSTOM_AI_API_KEY || ""
+    }
+  }
+  if (!apiKey) {
+    apiKey = await getVal("ai_api_key")
+  }
+
+  const model =
+    (await getVal("ai_model")) ||
+    (provider === "nvidia" ? "meta/llama-3.3-70b-instruct" : "llama-3.3-70b-versatile")
+  const customBaseUrl =
+    (await getVal("ai_custom_base_url")) || process.env.CUSTOM_AI_BASE_URL || PROVIDERS_INFO.custom.baseUrl
+
+  return { provider, apiKey, model, customBaseUrl }
 }
 
 export async function gerarResumo(texto: string): Promise<string> {
@@ -404,8 +425,17 @@ Responda APENAS com a versão melhorada da mensagem, pronta para copiar e colar 
   }
 }
 
+export function getEndpointUrl(provider: AiProvider, customBaseUrl?: string): string {
+  if (provider === "groq") return "https://api.groq.com/openai/v1/chat/completions"
+  if (provider === "nvidia") return "https://integrate.api.nvidia.com/v1/chat/completions"
+  if (provider === "openrouter") return "https://openrouter.ai/api/v1/chat/completions"
+
+  const base = (customBaseUrl || "http://localhost:11434/v1").replace(/\/+$/, "").replace(/\/chat\/completions$/, "")
+  return `${base}/chat/completions`
+}
+
 async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, maxRetries = 2, maxTokens = 1024): Promise<string> {
-  const url = config.provider === "groq" ? GROQ_URL : OPENROUTER_URL
+  const url = getEndpointUrl(config.provider, config.customBaseUrl)
   const model = config.model
 
   for (let i = 0; i <= maxRetries; i++) {
@@ -427,7 +457,7 @@ async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, max
 
       if (!res.ok) {
         const text = await res.text()
-        throw new Error(`API ${config.provider} (${res.status}): ${text}`)
+        throw new Error(`API ${config.provider.toUpperCase()} (${res.status}): ${text}`)
       }
 
       const data = await res.json()
@@ -440,13 +470,4 @@ async function sendToAi(prompt: string, config: AiConfig, temperature = 0.7, max
   throw new Error("Falha na comunicação com a IA.")
 }
 
-export const MODELOS_SUGERIDOS = [
-  { provider: "groq", value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Groq) — Grátis" },
-  { provider: "groq", value: "llama-3.1-8b-instant", label: "Llama 3.1 8B (Groq) — Grátis, rápido" },
-  { provider: "groq", value: "mixtral-8x7b-32768", label: "Mixtral 8x7B (Groq) — Grátis" },
-  { provider: "openrouter", value: "openai/gpt-4o-mini", label: "GPT-4o mini (OpenRouter)" },
-  { provider: "openrouter", value: "openai/gpt-4o", label: "GPT-4o (OpenRouter)" },
-  { provider: "openrouter", value: "anthropic/claude-3.5-haiku", label: "Claude 3.5 Haiku (OpenRouter)" },
-  { provider: "openrouter", value: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash (OpenRouter)" },
-  { provider: "openrouter", value: "deepseek/deepseek-chat", label: "DeepSeek V3 (OpenRouter)" },
-]
+export { MODELOS_SUGERIDOS }

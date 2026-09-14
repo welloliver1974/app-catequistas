@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff, Bell, MessageSquareText } from "lucide-react"
+import { Save, Mail, Lock, Download, Upload, Trash2, RotateCcw, Loader2, CheckCircle2, AlertCircle, HardDrive, Sparkles, Eye, EyeOff, Bell, MessageSquareText, RefreshCw, ExternalLink, Activity, Cpu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { changeEmail, resetPassword } from "@/actions/auth"
-import { salvarConfigAi } from "@/actions/ai"
+import { salvarConfigAi, listarModelosDisponiveis, testarConexaoAi } from "@/actions/ai"
 import { salvarMural } from "@/actions/mural"
 import { salvarWebhookUrl, getInfoSincronizacao, sincronizarPlanilhaDiocesana } from "@/actions/sincronizar"
-import { MODELOS_SUGERIDOS } from "@/lib/modelos-ai"
+import { MODELOS_SUGERIDOS, PROVIDERS_INFO, AiProvider } from "@/lib/modelos-ai"
 import { PushManager } from "@/components/push/push-manager"
 
 interface Backup {
@@ -24,6 +24,8 @@ interface AiConfig {
   provider: string
   apiKey: string
   model: string
+  customBaseUrl?: string
+  keys?: Record<string, string>
 }
 
 interface Props {
@@ -32,12 +34,113 @@ interface Props {
 }
 
 export function ConfiguracoesClient({ user, aiConfig }: Props) {
-  const [aiProvider, setAiProvider] = useState(aiConfig.provider)
-  const [aiApiKey, setAiApiKey] = useState(aiConfig.apiKey)
-  const [aiModel, setAiModel] = useState(aiConfig.model)
+  const initialProvider = ((aiConfig.provider as AiProvider) || "groq") as AiProvider
+  const [aiProvider, setAiProvider] = useState<AiProvider>(initialProvider)
+  const [keysByProvider, setKeysByProvider] = useState<Record<string, string>>(() => {
+    return {
+      groq: aiConfig.keys?.groq || (initialProvider === "groq" ? aiConfig.apiKey : ""),
+      nvidia: aiConfig.keys?.nvidia || (initialProvider === "nvidia" ? aiConfig.apiKey : ""),
+      openrouter: aiConfig.keys?.openrouter || (initialProvider === "openrouter" ? aiConfig.apiKey : ""),
+      custom: aiConfig.keys?.custom || (initialProvider === "custom" ? aiConfig.apiKey : ""),
+    }
+  })
+  const [aiApiKey, setAiApiKey] = useState(aiConfig.apiKey || "")
+  const [aiModel, setAiModel] = useState(aiConfig.model || "llama-3.3-70b-versatile")
+  const [customBaseUrl, setCustomBaseUrl] = useState(aiConfig.customBaseUrl || PROVIDERS_INFO.custom.baseUrl)
   const [showKey, setShowKey] = useState(false)
   const [savingAi, setSavingAi] = useState(false)
+  const [testingAi, setTestingAi] = useState(false)
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [fetchedModels, setFetchedModels] = useState<{ id: string; label: string }[]>([])
+  const [isCustomModel, setIsCustomModel] = useState(false)
+  const [customModelInput, setCustomModelInput] = useState("")
+  const [testResult, setTestResult] = useState<{ success: boolean; text: string } | null>(null)
   const [msgAi, setMsgAi] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  function handleProviderChange(newProvider: AiProvider) {
+    setKeysByProvider((prev) => ({ ...prev, [aiProvider]: aiApiKey }))
+    setAiProvider(newProvider)
+
+    const keyForNew = keysByProvider[newProvider] || ""
+    setAiApiKey(keyForNew)
+
+    setFetchedModels([])
+    setTestResult(null)
+    setMsgAi(null)
+    setIsCustomModel(false)
+
+    const defaultModel =
+      MODELOS_SUGERIDOS.find((m) => m.provider === newProvider)?.value || ""
+    setAiModel(defaultModel)
+  }
+
+  async function handleListarModelos() {
+    if (!aiApiKey && aiProvider !== "custom") {
+      setMsgAi({ type: "error", text: "Informe a chave da API para consultar os modelos disponíveis." })
+      return
+    }
+    setLoadingModels(true)
+    setMsgAi(null)
+    setTestResult(null)
+    const res = await listarModelosDisponiveis(aiProvider, aiApiKey, customBaseUrl)
+    if (res.error) {
+      setMsgAi({ type: "error", text: res.error })
+    } else if (res.modelos) {
+      setFetchedModels(res.modelos)
+      setMsgAi({ type: "success", text: `${res.modelos.length} modelos encontrados na API!` })
+      if (res.modelos.length > 0 && !res.modelos.some((m) => m.id === aiModel)) {
+        setAiModel(res.modelos[0].id)
+      }
+    }
+    setLoadingModels(false)
+  }
+
+  async function handleTestarConexao() {
+    const modelToTest = isCustomModel ? customModelInput.trim() : aiModel
+    if (!modelToTest) {
+      setTestResult({ success: false, text: "Selecione ou digite um modelo para testar." })
+      return
+    }
+    setTestingAi(true)
+    setTestResult(null)
+    setMsgAi(null)
+    const res = await testarConexaoAi(aiProvider, aiApiKey, modelToTest, customBaseUrl)
+    if (res.error) {
+      setTestResult({ success: false, text: res.error })
+    } else {
+      setTestResult({ success: true, text: `${res.message} (Resposta: "${res.resposta}")` })
+    }
+    setTestingAi(false)
+  }
+
+  async function handleSalvarAi(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingAi(true)
+    setMsgAi(null)
+    const modelToSave = isCustomModel ? customModelInput.trim() : aiModel
+    if (!modelToSave) {
+      setMsgAi({ type: "error", text: "Por favor informe o modelo desejado." })
+      setSavingAi(false)
+      return
+    }
+
+    const formData = new FormData()
+    formData.set("provider", aiProvider)
+    formData.set("apiKey", aiApiKey)
+    formData.set("model", modelToSave)
+    if (aiProvider === "custom") {
+      formData.set("customBaseUrl", customBaseUrl)
+    }
+
+    const res = await salvarConfigAi(formData)
+    setKeysByProvider((prev) => ({ ...prev, [aiProvider]: aiApiKey }))
+    if ("error" in res && res.error) {
+      setMsgAi({ type: "error", text: res.error })
+    } else {
+      setMsgAi({ type: "success", text: res.success || "Configurações salvas no projeto!" })
+    }
+    setSavingAi(false)
+  }
   const [email, setEmail] = useState(user.email)
   const [senhaAtual, setSenhaAtual] = useState("")
   const [novaSenha, setNovaSenha] = useState("")
@@ -243,86 +346,246 @@ export function ConfiguracoesClient({ user, aiConfig }: Props) {
         <div className="space-y-6">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="h-4 w-4" /> Inteligência Artificial
-              </CardTitle>
-              <CardDescription>Configure a IA para gerar resumos de encontros e responder perguntas.</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-primary" /> Inteligência Artificial
+                </CardTitle>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary border border-primary/20">
+                  {PROVIDERS_INFO[aiProvider]?.name}
+                </span>
+              </div>
+              <CardDescription>
+                Configure os modelos de IA para resumos de encontros, sugestões de conteúdo e quizzes.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault()
-                  setSavingAi(true)
-                  setMsgAi(null)
-                  const formData = new FormData()
-                  formData.set("provider", aiProvider)
-                  formData.set("apiKey", aiApiKey)
-                  formData.set("model", aiModel)
-                  await salvarConfigAi(formData)
-                  setMsgAi({ type: "success", text: "Configuração salva!" })
-                  setSavingAi(false)
-                }}
-                className="space-y-4"
-              >
+              <form onSubmit={handleSalvarAi} className="space-y-4">
+                {/* Provedor */}
                 <div className="space-y-2">
-                  <Label>Provedor</Label>
-                  <select
-                    value={aiProvider}
-                    onChange={(e) => setAiProvider(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="groq">Groq (grátis)</option>
-                    <option value="openrouter">OpenRouter</option>
-                  </select>
+                  <Label>Provedor de IA</Label>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {(["groq", "nvidia", "openrouter", "custom"] as AiProvider[]).map((p) => {
+                      const info = PROVIDERS_INFO[p]
+                      const isSelected = aiProvider === p
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => handleProviderChange(p)}
+                          className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-xs font-medium transition-all text-center ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary"
+                              : "border-border/60 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <span className="font-semibold text-sm">{info.name}</span>
+                          <span className="text-[10px] opacity-80 mt-0.5">{info.badge.split("&")[0]}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                    <span>{PROVIDERS_INFO[aiProvider]?.helpText}</span>
+                    {PROVIDERS_INFO[aiProvider]?.helpUrl && (
+                      <a
+                        href={PROVIDERS_INFO[aiProvider].helpUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                      >
+                        Obter chave <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
+                {/* Base URL (se Custom) */}
+                {aiProvider === "custom" && (
+                  <div className="space-y-2 rounded-lg border border-border/60 p-3 bg-muted/20">
+                    <Label htmlFor="customBaseUrl" className="text-xs font-medium flex items-center gap-1.5">
+                      Base URL (Endpoint OpenAI-compatible)
+                    </Label>
+                    <Input
+                      id="customBaseUrl"
+                      type="url"
+                      value={customBaseUrl}
+                      onChange={(e) => setCustomBaseUrl(e.target.value)}
+                      placeholder="http://localhost:11434/v1 ou https://api.deepseek.com/v1"
+                      required={aiProvider === "custom"}
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Compatível com Ollama local, LM Studio, vLLM, DeepSeek direto ou qualquer API no padrão OpenAI.
+                    </p>
+                  </div>
+                )}
+
+                {/* Chave da API */}
                 <div className="space-y-2">
-                  <Label>Chave da API</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Chave da API ({PROVIDERS_INFO[aiProvider]?.name})</Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      💾 Salva por provedor no projeto
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       type={showKey ? "text" : "password"}
                       value={aiApiKey}
                       onChange={(e) => setAiApiKey(e.target.value)}
-                      placeholder={aiProvider === "groq" ? "gsk_..." : "sk-or-..."}
-                      required
+                      placeholder={PROVIDERS_INFO[aiProvider]?.placeholderKey}
+                      required={aiProvider !== "custom"}
+                      className="font-mono text-xs"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="icon"
                       onClick={() => setShowKey(!showKey)}
-                      className="p-2 rounded hover:bg-muted transition-colors"
+                      title={showKey ? "Ocultar chave" : "Mostrar chave"}
                     >
                       {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
+                {/* Modelo */}
                 <div className="space-y-2">
-                  <Label>Modelo</Label>
-                  <select
-                    value={aiModel}
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    {MODELOS_SUGERIDOS
-                      .filter((m) => m.provider === aiProvider)
-                      .map((m) => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))}
-                  </select>
+                  <div className="flex items-center justify-between">
+                    <Label>Modelo</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleListarModelos}
+                      disabled={loadingModels}
+                      className="h-6 px-2 text-[11px] gap-1 text-primary hover:text-primary"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${loadingModels ? "animate-spin" : ""}`} />
+                      {loadingModels ? "Consultando..." : "Listar da API"}
+                    </Button>
+                  </div>
+
+                  {!isCustomModel ? (
+                    <select
+                      value={aiModel}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") {
+                          setIsCustomModel(true)
+                          setCustomModelInput(aiModel)
+                        } else {
+                          setAiModel(e.target.value)
+                        }
+                      }}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {fetchedModels.length > 0 && (
+                        <optgroup label="Modelos carregados da sua API">
+                          {fetchedModels.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+
+                      <optgroup label="Modelos recomendados">
+                        {MODELOS_SUGERIDOS.filter((m) => m.provider === aiProvider).map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label} {m.tag ? `[${m.tag}]` : ""}
+                          </option>
+                        ))}
+                      </optgroup>
+
+                      <option value="__custom__">✏️ Digitar outro modelo manualmente...</option>
+                    </select>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          value={customModelInput}
+                          onChange={(e) => setCustomModelInput(e.target.value)}
+                          placeholder="Digite o ID do modelo (ex: meta/llama-3.3-70b-instruct)"
+                          className="text-xs font-mono"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsCustomModel(false)
+                            if (customModelInput.trim()) {
+                              setAiModel(customModelInput.trim())
+                            }
+                          }}
+                        >
+                          Voltar à lista
+                        </Button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Insira o identificador exato aceito pelo endpoint do provedor.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                <Button type="submit" disabled={savingAi} size="sm" className="gap-2">
-                  {savingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {savingAi ? "Salvando..." : "Salvar Configuração"}
-                </Button>
+                {/* Feedback de Teste */}
+                {testResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-2.5 rounded-md text-xs flex items-start gap-2 border ${
+                      testResult.success
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                        : "bg-destructive/10 border-destructive/30 text-destructive"
+                    }`}
+                  >
+                    {testResult.success ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    )}
+                    <span className="leading-tight">{testResult.text}</span>
+                  </motion.div>
+                )}
 
+                {/* Ações */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <Button
+                    type="submit"
+                    disabled={savingAi}
+                    size="sm"
+                    className="gap-1.5"
+                  >
+                    {savingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingAi ? "Salvando..." : "Salvar no Projeto"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={testingAi}
+                    size="sm"
+                    onClick={handleTestarConexao}
+                    className="gap-1.5"
+                  >
+                    {testingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
+                    {testingAi ? "Testando..." : "Testar Conexão"}
+                  </Button>
+                </div>
+
+                {/* Mensagens gerais */}
                 {msgAi && (
                   <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`text-sm flex items-center gap-1 ${msgAi.type === "success" ? "text-primary" : "text-destructive"}`}
+                    className={`text-xs flex items-center gap-1.5 pt-1 ${
+                      msgAi.type === "success" ? "text-primary" : "text-destructive"
+                    }`}
                   >
-                    {msgAi.type === "success" ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {msgAi.type === "success" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
                     {msgAi.text}
                   </motion.p>
                 )}
