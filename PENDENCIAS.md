@@ -63,6 +63,11 @@
 - [x] **Organização da Sidebar em Categorias** — Agrupamento dos links em 4 blocos visuais (`Geral`, `Catequese`, `Pastoral & IA`, `Sistema`) com títulos sutis e ergonomia no desktop e drawer mobile
 - [x] **Contexto Total no Assistente IA (`perguntarAoAssistente`)** — Removido o corte `.slice(0, 20)`; agora envia a totalidade dos 85 catequistas com telefones e turmas consolidadas para resposta precisa sobre qualquer pessoa
 - [x] **Chamada Offline para o Coordenador (`/presenca/chamada`)** — Interface dedicada para chamada presencial rápida, persistência em `localStorage` para uso sem internet e botão de sincronização em lote com o banco
+- [x] **Mensagens de WhatsApp com IA Humanizadas e Pastorais (`/mensagens`)** — Tom acolhedor e fraterno, formatação com negrito nativo do WhatsApp (`*Data:*`, `*Tema:*`), emojis pastorais com bom gosto, remoção do link no lembrete e presença do link no agradecimento
+- [x] **Próximo Encontro com Data Real no Agradecimento** — Backend busca automaticamente o próximo encontro agendado pós-evento e entrega data e tema confirmados para a IA, eliminando alucinações
+- [x] **Correção Definitiva de Fuso Horário nas Datas de Encontros (`src/lib/utils.ts`)** — Funções `formatarData` e `formatarDataExtenso` em UTC evitam retrocesso de 1 dia a menos em Brasília (UTC-3)
+- [x] **Seletor de Encontro no Lembrete** — Coordenador escolhe exatamente qual encontro da grade deseja lembrar, com datas e dias da semana formatados
+- [x] **Permissões de Execução nos Scripts de Servidor** — Scripts `deploy.sh`, `backup.sh` e `backup-cloud.sh` configurados com `+x` no git
 
 ## 🔲 Pendências e Ideias Futuras (Backlog)
 
