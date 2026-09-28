@@ -301,10 +301,11 @@ Use linguagem pastoral e prática. Responda APENAS com a análise em markdown.`
   return await sendToAi(prompt, config, 0.5, 2, 2048)
 }
 
-export async function gerarMensagemGrupo(dados: {
+export interface MensagemGrupoDados {
   tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
   tema?: string
   data?: string
+  dataExtenso?: string
   local?: string
   turma?: string
   linkPresenca?: string
@@ -314,7 +315,15 @@ export async function gerarMensagemGrupo(dados: {
   totalCatequistas?: number
   presentes?: number
   ausentes?: number
-}): Promise<string> {
+  proximoEncontro?: {
+    tema: string
+    data: string
+    dataExtenso?: string
+    local?: string | null
+  }
+}
+
+export async function gerarMensagemGrupo(dados: MensagemGrupoDados): Promise<string> {
   const config = await getAiConfig()
   if (!config.apiKey) throw new Error("Configure a chave da API de IA nas Configurações.")
 
@@ -322,108 +331,125 @@ export async function gerarMensagemGrupo(dados: {
   return await sendToAi(prompt, config, 0.7)
 }
 
-function geraPromptMensagem(dados: {
-  tipo: "lembrete" | "agradecimento" | "convocacao" | "livre"
-  tema?: string
-  data?: string
-  local?: string
-  turma?: string
-  linkPresenca?: string
-  resumo?: string
-  instrucao?: string
-  mensagemUsuario?: string
-  totalCatequistas?: number
-  presentes?: number
-  ausentes?: number
-}): string {
-  const base = `Você é um coordenador de catequese acolhedor e pastoral. Escreva uma mensagem para o grupo de WhatsApp dos catequistas.
+function geraPromptMensagem(dados: MensagemGrupoDados): string {
+  const base = `Você é um coordenador de catequese paroquial muito próximo, acolhedor e dedicado à comunidade.
+Sua missão é redigir uma mensagem para enviar no grupo de WhatsApp dos catequistas.
 
-REGRAS IMPORTANTES:
-- Use linguagem calorosa, pastoral e acolhedora
-- No máximo 8 linhas
-- NÃO use emojis
-- NÃO use markdown
-- Use quebras de linha para separar ideias
-- Termine com uma saudação cristã ("Paz e bem!", "Deus abençoe a todos!", etc.)
-- Inclua o link de presença quando relevante: ${dados.linkPresenca || "https://catequistas.housecloud.tec.br/presenca/confirmar"}`
+DIRETRIZES DE ESTILO E LINGUAGEM:
+- Tom: Verdadeiramente humano, fraterno, caloroso, pastoral e encorajador. Deve soar como uma pessoa de fé real falando com seus irmãos de ministério, e NUNCA como um texto frio, burocrático, corporativo ou gerado por robô.
+- Formatação WhatsApp: Use *negrito* nos pontos de atenção e dados-chave (*Data:*, *Tema:*, *Local:*, etc.).
+- Emojis: Use emojis acolhedores e pastorais com sensibilidade e bom gosto (ex: 🕊️, ✨, 🙏, 📖, 📅, 📍, ❤️) para dar leveza e vida à mensagem, sem excessos.
+- Parágrafos: Separe ideias em parágrafos curtos com linha em branco para leitura fluida no celular.
+- Datas: Utilize RIGOROSAMENTE as datas fornecidas nos dados. NUNCA altere ou invente dias da semana ou datas fictícias.`
 
   switch (dados.tipo) {
     case "lembrete":
       return `${base}
 
-Tipo: LEMBRETE DE ENCONTRO
+Tipo de Mensagem: LEMBRETE DE ENCONTRO
 
-Dados do próximo encontro:
-- Data: ${dados.data || "[data do encontro]"}
-- Tema: ${dados.tema || "[tema do encontro]"}
-- Local: ${dados.local || "[local do encontro]"}
+DADOS DO ENCONTRO:
+- Data: ${dados.dataExtenso ? `${dados.dataExtenso} (${dados.data})` : dados.data || "[Data do encontro]"}
+- Tema: ${dados.tema || "[Tema do encontro]"}
+- Local: ${dados.local || "Salão Paroquial"}
 ${dados.turma ? `- Turma: ${dados.turma}` : ""}
 
-A mensagem deve:
-1. Saudar os catequistas com entusiasmo
-2. Anunciar o próximo encontro com data, tema e local
-3. Convidar para confirmar presença pelo link
-4. Incentivar a participação de todos
-5. Encerrar com saudação cristã
+ORIENTAÇÕES ESPECÍFICAS PARA O LEMBRETE:
+1. Comece com uma saudação calorosa e fraterna (ex: "Queridos catequistas, paz e bem! 🕊️✨" ou "Irmãos e irmãs na catequese, a paz de Jesus!").
+2. Lembre a todos do próximo encontro que está chegando, com palavras de ânimo, oração e amor pela missão com nossos catequizandos.
+3. Destaque as informações de forma limpa e bonita com negrito do WhatsApp:
+   📅 *Data:* ${dados.dataExtenso || dados.data || "[Data]"}
+   📖 *Tema:* ${dados.tema || "[Tema]"}
+   📍 *Local:* ${dados.local || "Salão Paroquial"}
+4. IMPORTANTE: NÃO coloque link de presença nesta mensagem de lembrete! O lembrete é focado na motivação, acolhida e união da equipe.
+5. Incentive a participação e a oração de todos uns pelos outros.
+6. Encerre com uma bênção fraterna e afetuosa.
 
-Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+Responda APENAS com o texto final da mensagem, pronto para copiar e colar diretamente no WhatsApp.`
 
     case "agradecimento":
       return `${base}
 
-Tipo: AGRADECIMENTO PÓS-ENCONTRO
+Tipo de Mensagem: AGRADECIMENTO PÓS-ENCONTRO
 
-Dados do encontro realizado:
-- Data: ${dados.data || "[data]"}
-- Tema: ${dados.tema || "[tema]"}
-- Local: ${dados.local || "[local]"}
-${dados.totalCatequistas ? `- Presenças: ${dados.presentes || 0} de ${dados.totalCatequistas} catequistas` : ""}
-${dados.resumo ? `- Resumo do encontro: ${dados.resumo}` : ""}
+DADOS DO ENCONTRO REALIZADO:
+- Data realizada: ${dados.dataExtenso ? `${dados.dataExtenso} (${dados.data})` : dados.data || "[Data]"}
+- Tema trabalhado: ${dados.tema || "[Tema]"}
+- Local: ${dados.local || "[Local]"}
+${dados.totalCatequistas ? `- Participação: ${dados.presentes ?? 0} de ${dados.totalCatequistas} catequistas presentes` : ""}
+${dados.resumo ? `- Resumo dos pontos vivenciados: ${dados.resumo}` : ""}
+${dados.linkPresenca ? `- Link de presença/confirmação: ${dados.linkPresenca}` : ""}
 
-A mensagem deve:
-1. Agradecer a presença de todos
-2. Compartilhar um breve resumo do que foi abordado
-3. Se houver ausentes, mencionar que sentimos falta e que o link continua disponível para conteúdo
-4. Se houver próximo encontro agendado, já adiantar a data
-5. Encerrar com gratidão e saudação cristã
+DADOS DO PRÓXIMO ENCONTRO:
+${
+  dados.proximoEncontro
+    ? `- Próximo Encontro AGENDADO:
+  * Data: ${dados.proximoEncontro.dataExtenso ? `${dados.proximoEncontro.dataExtenso} (${dados.proximoEncontro.data})` : dados.proximoEncontro.data}
+  * Tema: ${dados.proximoEncontro.tema}
+  * Local: ${dados.proximoEncontro.local || dados.local || "Salão Paroquial"}`
+    : "- Próximo Encontro: AINDA NÃO HÁ DATA CADASTRADA NO SISTEMA. (Atenção: NÃO INVENTE NENHUMA DATA! Apenas diga com carinho que a data do próximo encontro será avisada em breve aqui no grupo)."
+}
 
-Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+ORIENTAÇÕES ESPECÍFICAS PARA O AGRADECIMENTO:
+1. Inicie com uma mensagem sincera de gratidão a Deus e a cada catequista que se fez presente com amor e dedicação.
+2. Destaque brevemente a importância do tema trabalhado (${dados.tema || "trabalhado no encontro"}) na vida dos catequizandos.
+3. Se houver ausentes, expresse acolhimento fraterno ("sentimos muita falta de quem não pôde estar conosco hoje!").
+4. LINK DE PRESENÇA: Inclua o link de presença convidando quem faltou ou quem ainda não confirmou/justificou a conferir pelo link:
+${dados.linkPresenca ? `   🔗 *Link de confirmação/registro de presença:* ${dados.linkPresenca}` : ""}
+5. PRÓXIMO ENCONTRO:
+${
+  dados.proximoEncontro
+    ? `   Anuncie claramente a data e o tema do próximo encontro exatamente como informado acima (${dados.proximoEncontro.dataExtenso || dados.proximoEncontro.data}). Motive a todos a já reservarem essa data na agenda.`
+    : `   Diga que a data do próximo encontro será divulgada em breve. NÃO crie datas fictícias.`
+}
+6. Encerre com um abraço fraterno e bênção cristã acolhedora.
+
+Responda APENAS com o texto final da mensagem, pronto para copiar e colar diretamente no WhatsApp.`
 
     case "convocacao":
       return `${base}
 
-Tipo: COMUNICADO ESPECIAL
+Tipo de Mensagem: COMUNICADO / AVISO IMPORTANTE
 
-Instrução do coordenador: ${dados.instrucao || "[instrução]"}
-${dados.data ? `- Data relacionada: ${dados.data}` : ""}
+Instrução do Coordenador:
+"""
+${dados.instrucao || "[instrução]"}
+"""
+${dados.data ? `- Data relacionada: ${dados.dataExtenso || dados.data}` : ""}
 
-A mensagem deve:
-1. Transmitir o comunicado de forma clara e acolhedora
-2. Manter o tom pastoral e respeitoso
-3. Incluir orientações práticas (o que fazer, quando, onde)
-4. Convidar para tirar dúvidas se necessário
-5. Encerrar com saudação cristã
+ORIENTAÇÕES ESPECÍFICAS:
+1. Abra com uma saudação calorosa e atenciosa aos catequistas.
+2. Comunique as informações com clareza, afeto e respeito, mantendo o tom fraterno.
+3. Destaque datas, horários e locais em *negrito* para facilitar a consulta rápida no celular.
+4. Coloque-se à disposição para qualquer dúvida ou ajuda.
+5. Finalize com votos de paz e bênçãos.
 
-Responda APENAS com o texto da mensagem pronta para copiar e colar no grupo.`
+Responda APENAS com o texto final da mensagem, pronto para copiar e colar diretamente no WhatsApp.`
 
     case "livre":
       return `${base}
 
-Tipo: MENSAGEM LIVRE
+Tipo de Mensagem: MENSAGEM LIVRE (Aprimoramento Pastoral)
 
-Rascunho do coordenador:
+Rascunho original do coordenador:
 """
 ${dados.mensagemUsuario || "[mensagem do coordenador]"}
 """
 
-Reescreva a mensagem acima mantendo o sentido original, mas melhorando o tom para ser mais acolhedora, pastoral e clara para um grupo de catequistas. Corrija qualquer erro de português se necessário. Mantenha o mesmo conteúdo e intenção.
+ORIENTAÇÕES:
+Reescreva a mensagem do coordenador tornando-a mais acolhedora, pastoral, calorosa e fluida para o WhatsApp dos catequistas.
+- Corrija eventuais desvios gramaticais.
+- Use *negrito* nos pontos que merecem destaque.
+- Distribua emojis pastorais com bom gosto.
+- Mantenha estritamente o sentido, os avisos e a essência da mensagem original, sem inventar fatos novos.
 
-Responda APENAS com a versão melhorada da mensagem, pronta para copiar e colar no grupo.`
+Responda APENAS com o texto aprimorado da mensagem, pronto para copiar e colar diretamente no WhatsApp.`
 
     default:
       return base
   }
 }
+
 
 export function getEndpointUrl(provider: AiProvider, customBaseUrl?: string): string {
   if (provider === "groq") return "https://api.groq.com/openai/v1/chat/completions"

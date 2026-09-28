@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 
 import { AiProvider, PROVIDERS_INFO } from "@/lib/modelos-ai"
 import { getEndpointUrl } from "@/lib/ai"
+import { formatarData, formatarDataExtenso, inicioDoDiaBrasilia } from "@/lib/utils"
 
 export async function salvarConfigAi(formData: FormData) {
   try {
@@ -243,7 +244,7 @@ export async function getEncontroSumario(encontroId: string) {
 
   return {
     tema: encontro.tema,
-    data: encontro.data.toLocaleDateString("pt-BR"),
+    data: formatarData(encontro.data),
     local: encontro.local,
     totalPresencas: encontro.presencas.length,
     totalCatequistas,
@@ -355,7 +356,7 @@ export async function gerarMensagemCatequista(catequistaId: string, encontroId: 
     const mensagem = await gerarMensagemPersonalizadaAi({
       nome: catequista.nome,
       tema: encontro.tema,
-      dataEncontro: encontro.data.toLocaleDateString("pt-BR"),
+      dataEncontro: formatarData(encontro.data),
       totalFaltas,
       totalEncontros,
     })
@@ -381,7 +382,7 @@ export async function gerarRelatorioNarrativo(mes: number, ano: number) {
 
     const encontrosData = encontros.map((e) => ({
       tema: e.tema,
-      data: e.data.toLocaleDateString("pt-BR"),
+      data: formatarData(e.data),
       presentes: e.presencas.filter((p) => p.presente).length,
       ausentes: e.presencas.filter((p) => !p.presente).length,
       total: totalCatequistas,
@@ -452,7 +453,7 @@ export async function analisarFaltasRecorrentes() {
           faltas: faltas.length,
           total: totalEncontros,
           percentualFalta,
-          ultimasFaltas: faltas.slice(0, 3).map((p) => p.encontro.data.toLocaleDateString("pt-BR")),
+          ultimasFaltas: faltas.slice(0, 3).map((p) => formatarData(p.encontro.data)),
         }
       })
       .filter((c) => c.faltas > 0)
@@ -486,7 +487,7 @@ export async function analisarTemasRecorrentes() {
     const analise = await analisarTemasAi({
       encontros: comResumo.map((e) => ({
         numeroEncontro: e.numeroEncontro,
-        data: e.data.toLocaleDateString("pt-BR"),
+        data: formatarData(e.data),
         tema: e.tema,
         resumo: e.resumo ?? "",
       })),
@@ -507,54 +508,110 @@ export async function gerarMensagemGrupo(params: {
   try {
     const baseUrl = "https://catequistas.housecloud.tec.br"
 
-    // Para lembrete, busca o próximo encontro automaticamente
+    // Para lembrete, busca o encontro selecionado ou o próximo encontro futuro
     if (params.tipo === "lembrete") {
-      const agora = new Date()
-      const encontro = await prisma.encontro.findFirst({
-        where: { data: { gte: agora } },
-        orderBy: { data: "asc" },
-        include: { turma: { select: { nome: true } } },
-      })
-      if (!encontro) return { error: "Nenhum encontro futuro agendado." }
+      let encontro = null
+
+      if (params.encontroId) {
+        encontro = await prisma.encontro.findUnique({
+          where: { id: params.encontroId },
+          include: { turma: { select: { nome: true } } },
+        })
+      }
+
+      if (!encontro) {
+        const hoje = inicioDoDiaBrasilia()
+        encontro = await prisma.encontro.findFirst({
+          where: { data: { gte: hoje } },
+          orderBy: { data: "asc" },
+          include: { turma: { select: { nome: true } } },
+        })
+      }
+
+      // Fallback: se não achar futuro, pega o primeiro por data
+      if (!encontro) {
+        encontro = await prisma.encontro.findFirst({
+          orderBy: { data: "asc" },
+          include: { turma: { select: { nome: true } } },
+        })
+      }
+
+      if (!encontro) return { error: "Nenhum encontro agendado encontrado." }
 
       const mensagem = await gerarMensagemGrupoAi({
         tipo: "lembrete",
         tema: encontro.tema,
-        data: encontro.data.toLocaleDateString("pt-BR"),
-        local: encontro.local || encontro.turma.nome,
+        data: formatarData(encontro.data),
+        dataExtenso: formatarDataExtenso(encontro.data),
+        local: encontro.local || encontro.turma.nome || "Salão Paroquial",
         turma: encontro.turma.nome,
-        linkPresenca: `${baseUrl}/presenca/confirmar?encontro=${encontro.id}`,
+        // Conforme solicitado: mensagem de lembrete não inclui link de presença
       })
       return { success: true, mensagem, encontro: encontro.tema }
     }
 
-    // Para agradecimento, busca o encontro selecionado
-    if (params.tipo === "agradecimento" && params.encontroId) {
-      const encontro = await prisma.encontro.findUnique({
-        where: { id: params.encontroId },
-        include: {
-          turma: { select: { nome: true } },
-          presencas: { select: { presente: true } },
-        },
-      })
+    // Para agradecimento, busca o encontro realizado selecionado
+    if (params.tipo === "agradecimento") {
+      let encontro = null
+
+      if (params.encontroId) {
+        encontro = await prisma.encontro.findUnique({
+          where: { id: params.encontroId },
+          include: {
+            turma: { select: { nome: true } },
+            presencas: { select: { presente: true } },
+          },
+        })
+      }
+
+      if (!encontro) {
+        encontro = await prisma.encontro.findFirst({
+          orderBy: { data: "desc" },
+          include: {
+            turma: { select: { nome: true } },
+            presencas: { select: { presente: true } },
+          },
+        })
+      }
+
       if (!encontro) return { error: "Encontro não encontrado." }
+
+      // Busca o próximo encontro agendado após a data deste encontro
+      const proximo = await prisma.encontro.findFirst({
+        where: {
+          data: { gt: encontro.data },
+        },
+        orderBy: { data: "asc" },
+        include: { turma: { select: { nome: true } } },
+      })
+
+      const proximoEncontro = proximo
+        ? {
+            tema: proximo.tema,
+            data: formatarData(proximo.data),
+            dataExtenso: formatarDataExtenso(proximo.data),
+            local: proximo.local || proximo.turma?.nome,
+          }
+        : undefined
 
       const totalCatequistas = await prisma.catequista.count({
         where: { status: "ATIVO" },
       })
       const presentes = encontro.presencas.filter((p) => p.presente).length
-      const ausentes = encontro.presencas.length - presentes
+      const ausentes = Math.max(0, totalCatequistas - presentes)
 
       const mensagem = await gerarMensagemGrupoAi({
         tipo: "agradecimento",
         tema: encontro.tema,
-        data: encontro.data.toLocaleDateString("pt-BR"),
-        local: encontro.local || encontro.turma?.nome || "Não informado",
+        data: formatarData(encontro.data),
+        dataExtenso: formatarDataExtenso(encontro.data),
+        local: encontro.local || encontro.turma?.nome || "Salão Paroquial",
         resumo: encontro.resumo || undefined,
         totalCatequistas,
         presentes,
         ausentes,
         linkPresenca: `${baseUrl}/presenca/confirmar?encontro=${encontro.id}`,
+        proximoEncontro,
       })
       return { success: true, mensagem, encontro: encontro.tema }
     }
@@ -565,7 +622,6 @@ export async function gerarMensagemGrupo(params: {
       const mensagem = await gerarMensagemGrupoAi({
         tipo: "convocacao",
         instrucao: params.instrucao,
-        linkPresenca: `${baseUrl}/presenca/confirmar`,
       })
       return { success: true, mensagem }
     }
@@ -576,7 +632,6 @@ export async function gerarMensagemGrupo(params: {
       const mensagem = await gerarMensagemGrupoAi({
         tipo: "livre",
         mensagemUsuario: params.mensagemUsuario,
-        linkPresenca: `${baseUrl}/presenca/confirmar`,
       })
       return { success: true, mensagem }
     }
@@ -587,20 +642,57 @@ export async function gerarMensagemGrupo(params: {
   }
 }
 
-export async function listarEncontrosPassados() {
+export async function listarEncontrosLembrete() {
   try {
-    const agora = new Date()
-    const encontros = await prisma.encontro.findMany({
-      where: { data: { lt: agora } },
-      orderBy: { data: "desc" },
-      take: 20,
+    const hoje = inicioDoDiaBrasilia()
+    let encontros = await prisma.encontro.findMany({
+      where: { data: { gte: hoje } },
+      orderBy: { data: "asc" },
       select: { id: true, tema: true, data: true },
     })
+
+    // Se não houver futuros, traz todos os agendados em ordem cronológica
+    if (encontros.length === 0) {
+      encontros = await prisma.encontro.findMany({
+        orderBy: { data: "asc" },
+        take: 20,
+        select: { id: true, tema: true, data: true },
+      })
+    }
+
     return encontros.map((e) => ({
       id: e.id,
-      label: `${e.data.toLocaleDateString("pt-BR")} — ${e.tema}`,
+      label: `${formatarData(e.data)} (${formatarDataExtenso(e.data, false)}) — ${e.tema}`,
     }))
   } catch {
     return []
   }
 }
+
+export async function listarEncontrosPassados() {
+  try {
+    const agora = new Date()
+    let encontros = await prisma.encontro.findMany({
+      where: { data: { lt: agora } },
+      orderBy: { data: "desc" },
+      take: 20,
+      select: { id: true, tema: true, data: true },
+    })
+
+    if (encontros.length === 0) {
+      encontros = await prisma.encontro.findMany({
+        orderBy: { data: "desc" },
+        take: 20,
+        select: { id: true, tema: true, data: true },
+      })
+    }
+
+    return encontros.map((e) => ({
+      id: e.id,
+      label: `${formatarData(e.data)} (${formatarDataExtenso(e.data, false)}) — ${e.tema}`,
+    }))
+  } catch {
+    return []
+  }
+}
+

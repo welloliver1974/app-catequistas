@@ -35,3 +35,35 @@ export function inicioDoDiaBrasilia(): Date {
   // Meia-noite de Brasília = 03:00 UTC
   return new Date(Date.UTC(ano, mes, dia, 3, 0, 0, 0))
 }
+
+/**
+ * Formata data de encontro em formato brasileiro DD/MM/AAAA.
+ * Usa timeZone: "UTC" para garantir que encontros gravados em UTC meia-noite (T00:00:00Z)
+ * ou meio-dia (T12:00:00Z) não sofram deslocamento de 1 dia a menos no fuso de Brasília (UTC-3).
+ */
+export function formatarData(data: Date | string | null | undefined): string {
+  if (!data) return ""
+  const d = typeof data === "string" ? new Date(data) : data
+  if (isNaN(d.getTime())) return ""
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" })
+}
+
+/**
+ * Formata data de encontro por extenso com dia da semana (ex: "domingo, 3 de maio de 2026").
+ * Utiliza timeZone: "UTC" para preservar com fidelidade o dia exato da semana e do mês.
+ */
+export function formatarDataExtenso(
+  data: Date | string | null | undefined,
+  incluirAno: boolean = true
+): string {
+  if (!data) return ""
+  const d = typeof data === "string" ? new Date(data) : data
+  if (isNaN(d.getTime())) return ""
+  return d.toLocaleDateString("pt-BR", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    ...(incluirAno ? { year: "numeric" } : {}),
+  })
+}

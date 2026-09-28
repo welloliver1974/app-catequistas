@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { gerarMensagemGrupo, listarEncontrosPassados } from "@/actions/ai"
+import { gerarMensagemGrupo, listarEncontrosPassados, listarEncontrosLembrete } from "@/actions/ai"
 
 type TipoMsg = "lembrete" | "agradecimento" | "convocacao" | "livre"
 
@@ -22,14 +22,16 @@ interface TipoConfig {
 }
 
 const TIPOS: TipoConfig[] = [
-  { tipo: "lembrete", label: "Lembrete", descricao: "Aviso do próximo encontro com data, tema e link", icon: Bell, cor: "text-sky-500" },
-  { tipo: "agradecimento", label: "Agradecimento", descricao: "Mensagem pós-encontro com resumo e gratidão", icon: Heart, cor: "text-rose-500" },
-  { tipo: "convocacao", label: "Comunicado", descricao: "Aviso especial, mudança ou convocação", icon: Megaphone, cor: "text-amber-500" },
-  { tipo: "livre", label: "Mensagem Livre", descricao: "Você escreve e a IA melhora o texto", icon: MessageSquare, cor: "text-emerald-500" },
+  { tipo: "lembrete", label: "Lembrete", descricao: "Aviso pastoral do encontro com data, tema e local", icon: Bell, cor: "text-sky-500" },
+  { tipo: "agradecimento", label: "Agradecimento", descricao: "Pós-encontro com gratidão, presença e próximo encontro", icon: Heart, cor: "text-rose-500" },
+  { tipo: "convocacao", label: "Comunicado", descricao: "Aviso especial, mudança ou orientação importante", icon: Megaphone, cor: "text-amber-500" },
+  { tipo: "livre", label: "Mensagem Livre", descricao: "Você escreve e a IA aprimora o tom pastoral", icon: MessageSquare, cor: "text-emerald-500" },
 ]
 
 export function MensagensClient() {
   const [tipo, setTipo] = useState<TipoMsg>("lembrete")
+  const [encontrosLembrete, setEncontrosLembrete] = useState<{ id: string; label: string }[]>([])
+  const [encontroLembreteId, setEncontroLembreteId] = useState("")
   const [encontrosPassados, setEncontrosPassados] = useState<{ id: string; label: string }[]>([])
   const [encontroId, setEncontroId] = useState("")
   const [instrucao, setInstrucao] = useState("")
@@ -40,6 +42,16 @@ export function MensagensClient() {
   const [error, setError] = useState<string | null>(null)
   const [copiado, setCopiado] = useState(false)
   const [showResult, setShowResult] = useState(false)
+
+  // Carrega encontros para lembrete ao montar ou ao selecionar tipo lembrete
+  useEffect(() => {
+    if (tipo === "lembrete" && encontrosLembrete.length === 0) {
+      listarEncontrosLembrete().then((lista) => {
+        setEncontrosLembrete(lista)
+        if (lista.length > 0) setEncontroLembreteId(lista[0].id)
+      })
+    }
+  }, [tipo, encontrosLembrete.length])
 
   // Carrega encontros passados quando seleciona agradecimento
   useEffect(() => {
@@ -59,7 +71,12 @@ export function MensagensClient() {
 
     const res = await gerarMensagemGrupo({
       tipo,
-      encontroId: tipo === "agradecimento" ? encontroId : undefined,
+      encontroId:
+        tipo === "lembrete"
+          ? encontroLembreteId || undefined
+          : tipo === "agradecimento"
+          ? encontroId || undefined
+          : undefined,
       instrucao: tipo === "convocacao" ? instrucao : undefined,
       mensagemUsuario: tipo === "livre" ? mensagemUsuario : undefined,
     })
@@ -86,7 +103,7 @@ export function MensagensClient() {
   }
 
   const podeGerar =
-    tipo === "lembrete" ||
+    (tipo === "lembrete" && (encontrosLembrete.length === 0 || encontroLembreteId)) ||
     (tipo === "agradecimento" && encontroId) ||
     (tipo === "convocacao" && instrucao.trim()) ||
     (tipo === "livre" && mensagemUsuario.trim())
@@ -100,7 +117,7 @@ export function MensagensClient() {
       <div className="p-4 sm:p-6 max-w-3xl space-y-6">
         {/* Subtítulo */}
         <p className="text-sm text-muted-foreground">
-          Gere mensagens com IA para compartilhar no grupo do WhatsApp com os catequistas.
+          Gere mensagens acolhedoras, naturais e formatadas para WhatsApp com IA para compartilhar com os catequistas.
         </p>
 
         {/* Cards de seleção de tipo */}
@@ -148,21 +165,35 @@ export function MensagensClient() {
               >
                 {tipo === "lembrete" && (
                   <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <Bell className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p className="font-medium text-foreground">Lembrete automático</p>
-                        <p>A IA vai buscar o <strong>próximo encontro agendado</strong> e criar uma mensagem de lembrete com data, tema, local e o link de confirmação de presença.</p>
-                      </div>
+                    <Label htmlFor="encontroLembrete">Escolha o encontro para o lembrete</Label>
+                    {encontrosLembrete.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhum encontro agendado encontrado.</p>
+                    ) : (
+                      <select
+                        id="encontroLembrete"
+                        value={encontroLembreteId}
+                        onChange={(e) => setEncontroLembreteId(e.target.value)}
+                        className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {encontrosLembrete.map((e) => (
+                          <option key={e.id} value={e.id}>{e.label}</option>
+                        ))}
+                      </select>
+                    )}
+                    <div className="flex items-start gap-3 p-3.5 rounded-lg bg-primary/5 border border-primary/10">
+                      <Bell className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        A IA vai redigir uma mensagem acolhedora e fraterna destacando a <strong>data exata</strong>, o <strong>tema</strong> e o <strong>local</strong> para animar os catequistas (sem link de presença).
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {tipo === "agradecimento" && (
                   <div className="space-y-3">
-                    <Label htmlFor="encontro">Escolha o encontro</Label>
+                    <Label htmlFor="encontro">Escolha o encontro realizado</Label>
                     {encontrosPassados.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Nenhum encontro passado encontrado.</p>
+                      <p className="text-sm text-muted-foreground">Nenhum encontro encontrado.</p>
                     ) : (
                       <select
                         id="encontro"
@@ -175,8 +206,15 @@ export function MensagensClient() {
                         ))}
                       </select>
                     )}
+                    <div className="flex items-start gap-3 p-3.5 rounded-lg bg-rose-500/5 border border-rose-500/10">
+                      <Heart className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        A mensagem incluirá o <strong>link de confirmação de presença</strong> para quem faltou ou precisa registrar e adiantará a <strong>data precisa do próximo encontro agendado</strong>.
+                      </p>
+                    </div>
                   </div>
                 )}
+
 
                 {tipo === "convocacao" && (
                   <div className="space-y-3">
